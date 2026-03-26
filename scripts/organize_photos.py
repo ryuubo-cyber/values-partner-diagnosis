@@ -19,7 +19,7 @@ VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp", ".wmv", ".fl
 MEDIA_EXTENSIONS = PHOTO_EXTENSIONS | VIDEO_EXTENSIONS
 
 
-def read_exif_date(file_path: Path) -> datetime | None:
+def read_exif_date(file_path):
     """JPEG/TIFFファイルからEXIF撮影日時を読み取る（外部ライブラリ不要）"""
     try:
         with open(file_path, "rb") as f:
@@ -39,7 +39,7 @@ def read_exif_date(file_path: Path) -> datetime | None:
     return None
 
 
-def _parse_jpeg_exif_date(data: bytes) -> datetime | None:
+def _parse_jpeg_exif_date(data):
     """JPEGのEXIFから撮影日時を抽出"""
     offset = 2
     while offset < len(data) - 1:
@@ -62,12 +62,12 @@ def _parse_jpeg_exif_date(data: bytes) -> datetime | None:
     return None
 
 
-def _parse_tiff_exif_date(data: bytes) -> datetime | None:
+def _parse_tiff_exif_date(data):
     """TIFFヘッダーから撮影日時を抽出"""
     return _find_datetime_in_exif(data)
 
 
-def _find_datetime_in_exif(data: bytes) -> datetime | None:
+def _find_datetime_in_exif(data):
     """EXIFデータ内からDateTimeOriginalを探す"""
     # DateTimeOriginal のパターンを直接検索（簡易実装）
     # フォーマット: "YYYY:MM:DD HH:MM:SS"
@@ -86,7 +86,7 @@ def _find_datetime_in_exif(data: bytes) -> datetime | None:
     return None
 
 
-def get_file_date(file_path: Path) -> datetime:
+def get_file_date(file_path):
     """ファイルの日付を取得する（EXIF優先、なければ更新日時）"""
     # まずEXIFから取得を試みる
     if file_path.suffix.lower() in {".jpg", ".jpeg", ".tiff", ".tif"}:
@@ -99,7 +99,7 @@ def get_file_date(file_path: Path) -> datetime:
     return datetime.fromtimestamp(mtime)
 
 
-def get_media_type(file_path: Path) -> str:
+def get_media_type(file_path):
     """メディアタイプを判定する"""
     ext = file_path.suffix.lower()
     if ext in PHOTO_EXTENSIONS:
@@ -109,8 +109,8 @@ def get_media_type(file_path: Path) -> str:
     return "その他"
 
 
-def organize_media(source_dirs: list[str], dest_dir: str, folder_format: str = "year-month",
-                   dry_run: bool = True, copy_mode: bool = False):
+def organize_media(source_dirs, dest_dir, folder_format="year-month",
+                   dry_run=True, copy_mode=False):
     """
     写真・動画をメタデータに基づいて整理する
 

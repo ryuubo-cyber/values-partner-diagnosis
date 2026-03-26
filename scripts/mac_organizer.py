@@ -44,7 +44,7 @@ def print_menu():
     print()
 
 
-def run_script(script_name: str, args: list[str] | None = None):
+def run_script(script_name, args=None):
     """スクリプトを実行する"""
     script_path = SCRIPT_DIR / script_name
     cmd = [sys.executable, str(script_path)]

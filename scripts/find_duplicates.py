@@ -11,7 +11,7 @@ from pathlib import Path
 from collections import defaultdict
 
 
-def calculate_hash(file_path: Path, quick: bool = False) -> str:
+def calculate_hash(file_path, quick=False):
     """
     ファイルのハッシュ値を計算する
 
@@ -41,7 +41,7 @@ def calculate_hash(file_path: Path, quick: bool = False) -> str:
     return hasher.hexdigest()
 
 
-def format_size(size_bytes: int) -> str:
+def format_size(size_bytes):
     """バイト数を読みやすい形式に変換する"""
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size_bytes < 1024:
@@ -50,7 +50,7 @@ def format_size(size_bytes: int) -> str:
     return f"{size_bytes:.1f} PB"
 
 
-def find_duplicates(search_dirs: list[str], min_size: int = 0, extensions: list[str] | None = None):
+def find_duplicates(search_dirs, min_size=0, extensions=None):
     """
     重複ファイルを検出する
 

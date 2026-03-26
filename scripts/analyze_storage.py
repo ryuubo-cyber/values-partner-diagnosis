@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 
-def format_size(size_bytes: int) -> str:
+def format_size(size_bytes):
     """バイト数を読みやすい形式に変換する"""
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if abs(size_bytes) < 1024:
@@ -19,7 +19,7 @@ def format_size(size_bytes: int) -> str:
     return f"{size_bytes:.1f} PB"
 
 
-def get_dir_size(path: Path, max_depth: int = 0, current_depth: int = 0) -> dict:
+def get_dir_size(path, max_depth=0, current_depth=0):
     """ディレクトリのサイズを再帰的に計算する"""
     result = {"path": path, "size": 0, "files": 0, "children": []}
 
@@ -60,7 +60,7 @@ def get_dir_size(path: Path, max_depth: int = 0, current_depth: int = 0) -> dict
     return result
 
 
-def _quick_dir_size(path: Path) -> tuple[int, int]:
+def _quick_dir_size(path):
     """ディレクトリのサイズを高速計算する（子の詳細なし）"""
     total_size = 0
     total_files = 0
@@ -77,7 +77,7 @@ def _quick_dir_size(path: Path) -> tuple[int, int]:
     return total_size, total_files
 
 
-def print_tree(result: dict, indent: int = 0, min_size: int = 10 * 1024 * 1024):
+def print_tree(result, indent=0, min_size=10 * 1024 * 1024):
     """ディレクトリツリーを表示する"""
     if result["size"] < min_size:
         return
@@ -97,7 +97,7 @@ def print_tree(result: dict, indent: int = 0, min_size: int = 10 * 1024 * 1024):
         print_tree(child, indent + 1, min_size)
 
 
-def find_large_files(search_dir: str, top_n: int = 30, min_size: int = 50 * 1024 * 1024):
+def find_large_files(search_dir, top_n=30, min_size=50 * 1024 * 1024):
     """大きなファイルを見つける"""
     path = Path(search_dir).expanduser()
     large_files = []
@@ -118,7 +118,7 @@ def find_large_files(search_dir: str, top_n: int = 30, min_size: int = 50 * 1024
     return large_files[:top_n]
 
 
-def find_old_files(search_dir: str, days: int = 365, top_n: int = 30):
+def find_old_files(search_dir, days=365, top_n=30):
     """長期間アクセスされていないファイルを見つける"""
     path = Path(search_dir).expanduser()
     cutoff = datetime.now() - timedelta(days=days)
@@ -141,7 +141,7 @@ def find_old_files(search_dir: str, days: int = 365, top_n: int = 30):
     return old_files[:top_n]
 
 
-def find_cache_dirs(home_dir: str) -> list[tuple[Path, int]]:
+def find_cache_dirs(home_dir):
     """キャッシュディレクトリを見つけてサイズを計算する"""
     home = Path(home_dir).expanduser()
 
@@ -171,8 +171,8 @@ def find_cache_dirs(home_dir: str) -> list[tuple[Path, int]]:
     return results
 
 
-def analyze_storage(target_dir: str, depth: int = 2, show_large: bool = True,
-                    show_old: bool = True, show_cache: bool = True):
+def analyze_storage(target_dir, depth=2, show_large=True,
+                    show_old=True, show_cache=True):
     """ストレージを総合分析する"""
     target = Path(target_dir).expanduser()
 

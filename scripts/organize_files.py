@@ -26,7 +26,7 @@ FILE_CATEGORIES = {
 }
 
 
-def get_category(file_path: Path) -> str:
+def get_category(file_path):
     """ファイルの拡張子からカテゴリを判定する"""
     ext = file_path.suffix.lower()
     for category, extensions in FILE_CATEGORIES.items():
@@ -35,14 +35,14 @@ def get_category(file_path: Path) -> str:
     return "その他"
 
 
-def get_date_folder(file_path: Path) -> str:
+def get_date_folder(file_path):
     """ファイルの更新日時から日付フォルダ名を生成する"""
     mtime = os.path.getmtime(file_path)
     dt = datetime.fromtimestamp(mtime)
     return dt.strftime("%Y/%Y-%m")
 
 
-def organize_files(source_dir: str, dest_dir: str, by_date: bool = False, dry_run: bool = True):
+def organize_files(source_dir, dest_dir, by_date=False, dry_run=True):
     """
     ファイルを整理する
 

@@ -29,7 +29,7 @@ URL_CATEGORIES = {
 }
 
 
-def categorize_url(url: str, title: str = "") -> str:
+def categorize_url(url, title=""):
     """URLとタイトルからカテゴリを推定する"""
     url_lower = url.lower()
     title_lower = title.lower()
@@ -42,7 +42,7 @@ def categorize_url(url: str, title: str = "") -> str:
     return "その他"
 
 
-def parse_chrome_bookmarks() -> list[dict]:
+def parse_chrome_bookmarks():
     """Chromeのブックマークを読み取る"""
     bookmarks = []
     chrome_paths = [
@@ -85,7 +85,7 @@ def parse_chrome_bookmarks() -> list[dict]:
     return bookmarks
 
 
-def _chrome_timestamp(timestamp_str: str) -> str:
+def _chrome_timestamp(timestamp_str):
     """Chromeのタイムスタンプを日時文字列に変換"""
     try:
         # Chrome uses microseconds since 1601-01-01
@@ -100,7 +100,7 @@ def _chrome_timestamp(timestamp_str: str) -> str:
     return "不明"
 
 
-def parse_safari_bookmarks() -> list[dict]:
+def parse_safari_bookmarks():
     """Safariのブックマークを読み取る"""
     bookmarks = []
     safari_path = Path("~/Library/Safari/Bookmarks.plist").expanduser()
@@ -139,7 +139,7 @@ def parse_safari_bookmarks() -> list[dict]:
     return bookmarks
 
 
-def export_organized_bookmarks(bookmarks: list[dict], output_dir: str):
+def export_organized_bookmarks(bookmarks, output_dir):
     """整理されたブックマークをファイルに出力する"""
     output_path = Path(output_dir).expanduser()
     output_path.mkdir(parents=True, exist_ok=True)
@@ -194,7 +194,7 @@ def export_organized_bookmarks(bookmarks: list[dict], output_dir: str):
     return md_path, json_path, categorized
 
 
-def scan_apple_notes(output_dir: str) -> int:
+def scan_apple_notes(output_dir):
     """Apple Notesのデータを読み取って整理する"""
     notes_db_path = Path("~/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite").expanduser()
 
