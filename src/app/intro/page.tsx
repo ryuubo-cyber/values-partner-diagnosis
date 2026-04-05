@@ -50,13 +50,22 @@ export default function IntroPage() {
         </div>
       </div>
 
-      <div className="bg-warm-100 rounded-xl p-4 mb-8">
+      <div className="bg-warm-100 rounded-xl p-4 mb-4">
         <ul className="space-y-2 text-sm text-text-light">
           <li>&#9201; 所要時間：約10〜15分</li>
           <li>&#128221; 全100問（10問ずつ回答）</li>
           <li>&#128190; 途中保存可能。いつでも再開できます</li>
           <li>&#128161; 正解・不正解はありません。直感で答えてOKです</li>
         </ul>
+      </div>
+
+      <div className="bg-warm-50 rounded-xl p-4 mb-8 border border-warm-200">
+        <p className="text-xs text-text-muted leading-relaxed">
+          &#128274; <span className="font-medium text-warm-700">プライバシーについて</span>
+          <br />
+          入力された情報やプロフィールは診断結果の生成のみに使用されます。
+          外部への送信・第三者への提供は一切行いません。個人を特定する情報は収集していません。
+        </p>
       </div>
 
       <div className="mt-auto space-y-3">

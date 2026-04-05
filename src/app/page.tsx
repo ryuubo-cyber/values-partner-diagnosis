@@ -111,6 +111,17 @@ export default function TopPage() {
       </div>
 
       <p className="text-xs text-text-muted mt-6">所要時間：約10〜15分</p>
+
+      {/* プライバシー注意書き */}
+      <div className="w-full bg-warm-100 rounded-xl p-4 mt-4 border border-warm-200">
+        <p className="text-xs text-text-muted leading-relaxed">
+          &#128274; <span className="font-medium text-warm-700">プライバシーについて</span>
+          <br />
+          この診断で入力された情報やプロフィールは、診断結果の生成のみに使用されます。
+          外部への送信・第三者への提供・マーケティング目的での利用は一切行いません。
+          診断データはセッション単位で管理され、個人を特定する情報は収集していません。
+        </p>
+      </div>
     </div>
   );
 }

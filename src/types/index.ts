@@ -96,10 +96,15 @@ export interface ReportJson {
     romance: Array<{ rank: number; typeName: string; reason: string }>;
     marriage: Array<{ rank: number; typeName: string; reason: string }>;
     business: Array<{ rank: number; typeName: string; reason: string }>;
+    friendship: Array<{ rank: number; typeName: string; reason: string }>;
+    client: Array<{ rank: number; typeName: string; reason: string }>;
   };
   encounterHints: { title: string; text: string };
   moneyAnalysis: { title: string; text: string };
   loveAndMarriageAnalysis: { title: string; text: string };
+  regionalCompatibility: { title: string; text: string };
+  fourPillarsInsight: { title: string; text: string };
+  partnerCheckGuide: { title: string; text: string };
   counselorMessage: { title: string; text: string };
 }
 
