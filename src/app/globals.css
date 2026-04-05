@@ -41,3 +41,23 @@ html {
 button, a {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* 印刷・PDF保存用スタイル */
+@media print {
+  body {
+    background: white;
+    font-size: 12px;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:gap-4 {
+    gap: 1rem;
+  }
+  .print\:rounded-none {
+    border-radius: 0;
+  }
+  .print\:bg-warm-100 {
+    background: #f9ede8;
+  }
+}
