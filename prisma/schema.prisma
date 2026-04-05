@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model DiagnosisSession {
+  id                     String   @id @default(uuid())
+  status                 String   @default("not_started")
+  currentCategoryIndex   Int      @default(0)
+  completedQuestionCount Int      @default(0)
+  startedAt              DateTime?
+  lastAnsweredAt         DateTime?
+  completedAt            DateTime?
+  resultGeneratedAt      DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  profile  DiagnosisProfile?
+  answers  DiagnosisAnswer[]
+  score    DiagnosisScore?
+  report   DiagnosisReport?
+
+  @@map("diagnosis_sessions")
+}
+
+model DiagnosisProfile {
+  id               String @id @default(uuid())
+  sessionId        String @unique
+  birthDate        String @default("")
+  birthPlace       String @default("")
+  currentResidence String @default("")
+  favoriteMusic    String @default("")
+  politicalInterest String @default("")
+  occupation       String @default("")
+  familyStructure  String @default("")
+  lifestyle        String @default("")
+  smartphone       String @default("")
+  snsUsage         String @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  session DiagnosisSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("diagnosis_profiles")
+}
+
+model DiagnosisQuestion {
+  id           String  @id
+  categoryId   String
+  displayOrder Int
+  questionText String
+  reverseScore Boolean @default(false)
+  activeFlag   Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("diagnosis_questions")
+}
+
+model DiagnosisAnswer {
+  id         String   @id @default(uuid())
+  sessionId  String
+  questionId String
+  categoryId String
+  answer     Int
+  answeredAt DateTime @default(now())
+
+  session DiagnosisSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@map("diagnosis_answers")
+}
+
+model DiagnosisScore {
+  id              String @id @default(uuid())
+  sessionId       String @unique
+  categoryScores  String
+  weightedScores  String
+  mainType        String
+  subType         String
+  highCategories  String
+  lowCategories   String
+  createdAt       DateTime @default(now())
+
+  session DiagnosisSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("diagnosis_scores")
+}
+
+model DiagnosisReport {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  reportJson  String
+  reportText  String   @default("")
+  modelName   String   @default("")
+  generatedAt DateTime @default(now())
+
+  session DiagnosisSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("diagnosis_reports")
+}

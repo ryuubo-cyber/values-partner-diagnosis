@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #d4726a;
+  --color-primary-light: #e8928b;
+  --color-primary-dark: #b85a53;
+  --color-warm-50: #fdf8f6;
+  --color-warm-100: #f9ede8;
+  --color-warm-200: #f3ddd5;
+  --color-warm-300: #e8c4b8;
+  --color-warm-400: #d4a192;
+  --color-warm-500: #c0806e;
+  --color-warm-600: #a8685a;
+  --color-warm-700: #8b5549;
+  --color-warm-800: #6e443b;
+  --color-warm-900: #4a2e28;
+  --color-accent: #7c9eb2;
+  --color-accent-light: #a3bfce;
+  --color-background: #fdf8f6;
+  --color-surface: #ffffff;
+  --color-text: #4a2e28;
+  --color-text-light: #8b7355;
+  --color-text-muted: #b8a08e;
+  --color-border: #e8ddd5;
+  --font-sans: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/* スムーズスクロール */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ボタンのタップ時ハイライト無効化（スマホ向け） */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
