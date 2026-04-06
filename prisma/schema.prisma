@@ -32,6 +32,8 @@ model DiagnosisProfile {
   id               String @id @default(uuid())
   sessionId        String @unique
   birthDate        String @default("")
+  gender           String @default("")
+  ageRange         String @default("")
   birthPlace       String @default("")
   currentResidence String @default("")
   favoriteMusic    String @default("")

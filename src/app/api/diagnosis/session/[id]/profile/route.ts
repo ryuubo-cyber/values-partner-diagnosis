@@ -29,33 +29,24 @@ export async function POST(
     }
 
     // プロフィール保存（upsert）
+    const profileData = {
+      birthDate: sanitize(body.birthDate),
+      gender: sanitize(body.gender),
+      ageRange: sanitize(body.ageRange),
+      birthPlace: sanitize(body.birthPlace),
+      currentResidence: sanitize(body.currentResidence),
+      favoriteMusic: sanitize(body.favoriteMusic),
+      politicalInterest: sanitize(body.politicalInterest),
+      occupation: sanitize(body.occupation),
+      familyStructure: sanitize(body.familyStructure),
+      lifestyle: sanitize(body.lifestyle),
+      smartphone: sanitize(body.smartphone),
+      snsUsage: sanitize(body.snsUsage),
+    };
     await prisma.diagnosisProfile.upsert({
       where: { sessionId: id },
-      update: {
-        birthDate: sanitize(body.birthDate),
-        birthPlace: sanitize(body.birthPlace),
-        currentResidence: sanitize(body.currentResidence),
-        favoriteMusic: sanitize(body.favoriteMusic),
-        politicalInterest: sanitize(body.politicalInterest),
-        occupation: sanitize(body.occupation),
-        familyStructure: sanitize(body.familyStructure),
-        lifestyle: sanitize(body.lifestyle),
-        smartphone: sanitize(body.smartphone),
-        snsUsage: sanitize(body.snsUsage),
-      },
-      create: {
-        sessionId: id,
-        birthDate: sanitize(body.birthDate),
-        birthPlace: sanitize(body.birthPlace),
-        currentResidence: sanitize(body.currentResidence),
-        favoriteMusic: sanitize(body.favoriteMusic),
-        politicalInterest: sanitize(body.politicalInterest),
-        occupation: sanitize(body.occupation),
-        familyStructure: sanitize(body.familyStructure),
-        lifestyle: sanitize(body.lifestyle),
-        smartphone: sanitize(body.smartphone),
-        snsUsage: sanitize(body.snsUsage),
-      },
+      update: profileData,
+      create: { sessionId: id, ...profileData },
     });
 
     return NextResponse.json({ success: true });
