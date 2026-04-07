@@ -89,6 +89,7 @@ ${data.subType}
 - regionalCompatibility は300字以上。スコアパターンから相性の良い日本の地域文化・県民性を分析${data.profile.birthPlace ? `。出身地（${data.profile.birthPlace}）との関連も考慮する` : ""}
 - fourPillarsInsight は500字以上。${hasBirthDate ? `生年月日（${data.profile.birthDate}）から実際の四柱推命の命式（年柱・月柱・日柱の天干地支）を算出し、五行バランスを分析する。日干を本命として性格・恋愛・パートナー相性を鑑定する。100問のスコアと五行の関連を統合分析する` : "スコアパターンから五行の傾向を推定し、パートナー相性を分析する"}
 - partnerCheckGuide は400字以上。恋愛・仕事・友人・クライアントそれぞれの関係で比較すべきカテゴリと基準を、このユーザーのスコアに基づいて具体的に解説
+- compatibilityNarrative は500字以上。compatibilityTop5のリストをまとめ、「あなたにとって理想的な人間関係」を恋愛・結婚・仕事・友人・クライアントを横断して語る文章。リスト形式ではなく、カウンセラーが語りかけるような自然な文体で書く
 - counselorMessage は500字以上。このユーザーの具体的なスコアパターンに触れて語りかける
 - すべて自然な日本語で、読みやすい段落構成にする
 - JSON以外の文字は出力しない
@@ -108,6 +109,7 @@ ${data.subType}
     "friendship": [{ "rank": number, "typeName": "string", "reason": "string" }],
     "client": [{ "rank": number, "typeName": "string", "reason": "string" }]
   },
+  "compatibilityNarrative": { "title": "string", "text": "string" },
   "encounterHints": { "title": "string", "text": "string" },
   "moneyAnalysis": { "title": "string", "text": "string" },
   "loveAndMarriageAnalysis": { "title": "string", "text": "string" },

@@ -99,6 +99,7 @@ export interface ReportJson {
     friendship: Array<{ rank: number; typeName: string; reason: string }>;
     client: Array<{ rank: number; typeName: string; reason: string }>;
   };
+  compatibilityNarrative?: { title: string; text: string };
   encounterHints: { title: string; text: string };
   moneyAnalysis: { title: string; text: string };
   loveAndMarriageAnalysis: { title: string; text: string };
