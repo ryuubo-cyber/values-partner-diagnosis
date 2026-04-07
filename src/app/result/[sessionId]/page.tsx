@@ -173,23 +173,32 @@ export default function ResultPage({
 
       {/* スコアチャート */}
       {scores && (
-        <Section title="カテゴリ別スコア">
+        <Section title="カテゴリ別 こだわりの強さ">
+          <p className="text-xs text-text-muted mb-3">
+            スコアが高い＝良いではありません。こだわりの強さ・関心の度合いを表しています。
+          </p>
           <div className="space-y-3">
             {Object.entries(scores.categoryScores).map(([catId, score]) => {
               const label = CATEGORY_MAP[catId]?.label || catId;
               const percentage = Math.round(((score - 10) / 40) * 100);
               const isHigh = scores.highCategories.includes(catId);
+              const isLow = scores.lowCategories.includes(catId);
+              const tendencyLabel = score >= 40 ? "とても強い" : score >= 35 ? "強い" : score >= 25 ? "ふつう" : score >= 20 ? "おおらか" : "とてもおおらか";
               return (
                 <div key={catId}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className={isHigh ? "font-bold text-primary" : "text-text-light"}>{label}</span>
-                    <span className="text-text-muted">{score}/50</span>
+                    <span className={isHigh ? "font-bold text-primary" : isLow ? "text-warm-400" : "text-text-light"}>{label}</span>
+                    <span className="text-text-muted">{tendencyLabel}</span>
                   </div>
-                  <div className="w-full bg-warm-200 rounded-full h-2">
+                  <div className="w-full bg-warm-200 rounded-full h-2 relative">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ${isHigh ? "bg-primary" : "bg-warm-400"}`}
+                      className={`h-full rounded-full transition-all duration-700 ${isHigh ? "bg-primary" : isLow ? "bg-warm-300" : "bg-warm-400"}`}
                       style={{ width: `${Math.max(percentage, 2)}%` }}
                     />
+                  </div>
+                  <div className="flex justify-between text-xs text-text-muted mt-0.5 opacity-50">
+                    <span>おおらか</span>
+                    <span>こだわり強い</span>
                   </div>
                 </div>
               );
@@ -212,7 +221,9 @@ export default function ResultPage({
             <div key={fb.categoryId} className="border-b border-border pb-4 last:border-0">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-warm-800">{fb.title}</h4>
-                <span className="text-xs text-text-muted">{fb.score}/50</span>
+                <span className="text-xs text-text-muted">
+                  {fb.score >= 40 ? "とても強い" : fb.score >= 35 ? "強い" : fb.score >= 25 ? "ふつう" : fb.score >= 20 ? "おおらか" : "とてもおおらか"}
+                </span>
               </div>
               <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{fb.text}</p>
             </div>
