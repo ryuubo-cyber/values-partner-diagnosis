@@ -1,5 +1,6 @@
 import { ReportJson, CategoryScores } from "@/types";
 import { CATEGORY_MAP, CATEGORIES } from "@/config/categories";
+import { calculateFourPillars, buildIntegratedInsight } from "./four-pillars";
 
 interface FallbackInput {
   profile: Record<string, string>;
@@ -227,20 +228,7 @@ export function generateFallbackReport(input: FallbackInput): ReportJson {
           : "落ち着いた対話を好むあなたは、比較的クールなコミュニケーション文化の関東圏の方と波長が合いやすいかもしれません。"
       }\n\nもちろん地域はあくまでも参考です。個人の価値観は地域文化だけでは決まりませんが、相手の育ちやバックグラウンドを理解する一つの手がかりになります。`,
     },
-    fourPillarsInsight: {
-      title: "四柱推命的な視点からの洞察",
-      text: `四柱推命では、生まれた年・月・日・時刻から「命式」を作り、五行（木・火・土・金・水）のバランスを読み解きます。あなたの価値観スコアを五行の観点で解釈してみましょう。\n\n${
-        (scores["growth"] || 0) >= 35 || (scores["curiosity"] || 0) >= 35
-          ? "「木」の気質：成長・発展・向上心を象徴します。学びや自己成長への意欲が高いあなたは、木の性質を持つ「甲（きのえ）」や「乙（きのと）」の年生まれの方と共鳴しやすいでしょう。春生まれの方とも相性が良い傾向があります。"
-          : (scores["communication"] || 0) >= 35 || (scores["society"] || 0) >= 35
-          ? "「火」の気質：情熱・表現・コミュニケーションを象徴します。人との繋がりを大切にするあなたは、火の性質を持つ「丙（ひのえ）」や「丁（ひのと）」の年生まれの方と気が合いやすいでしょう。"
-          : (scores["money"] || 0) >= 35 || (scores["career"] || 0) >= 35
-          ? "「金」の気質：実行力・決断力・経済感覚を象徴します。堅実で計画的なあなたは、金の性質を持つ「庚（かのえ）」や「辛（かのと）」の年生まれの方と価値観が合いやすいでしょう。"
-          : (scores["family"] || 0) >= 35 || (scores["selfcare"] || 0) >= 35
-          ? "「土」の気質：安定・包容力・家庭的な温かさを象徴します。調和を大切にするあなたは、土の性質を持つ「戊（つちのえ）」や「己（つちのと）」の年生まれの方と相性が良いでしょう。"
-          : "「水」の気質：柔軟性・感受性・適応力を象徴します。バランスよく多方面に興味を持つあなたは、水の性質を持つ「壬（みずのえ）」や「癸（みずのと）」の年生まれの方と波長が合いやすいでしょう。"
-      }\n\nより正確な四柱推命の鑑定は生年月日・出生時刻が必要ですが、あなたの価値観パターンはこのような五行の傾向と共鳴しています。パートナーとの相性を深く知りたい方は、専門家への相談も参考になるでしょう。\n\n※ 四柱推命はあくまでも参考の一つです。最も大切なのは、実際の対話を通じて相手を知ることです。`,
-    },
+    fourPillarsInsight: buildFourPillarsSection(profile, scores, highCategories),
     partnerCheckGuide: {
       title: "パートナー候補との結果の比較の仕方",
       text: `パートナー候補にもこの診断を受けてもらったら、以下のポイントを比較してみましょう。\n\n【恋愛相性のチェックポイント】\n・「family（家庭観）」スコアの差が10点以内だと、将来像のすり合わせがしやすいです\n・「communication（コミュニケーション）」が二人とも高いと、対話で問題を解決しやすい関係に\n・「money（お金観）」の差が大きい場合は、早めに価値観を話し合うことが大切\n\n【仕事・ビジネス相性のチェックポイント】\n・「career（キャリア観）」と「growth（成長志向）」が近いと、目標を共有しやすいです\n・一方が「curiosity（好奇心）」高め、もう一方が「selfcare（安定志向）」高めだとバランスが取れやすい\n・「money（お金観）」のスコアが近いと、ビジネス上の判断基準が合いやすい\n\n【友人・クライアント相性のチェックポイント】\n・「society（社会観）」と「communication」が近いと、自然体で交流できる関係になりやすい\n・「leisure（趣味・余暇）」のスコアが近いと共通の話題が多く、一緒にいて楽しい時間を過ごせます\n・「curiosity」が高い同士は刺激し合え、低い同士は落ち着いた安定感のある関係に\n\n【総合的な見方】\nすべてのスコアが一致している必要はありません。高得点カテゴリが2〜3つ重なっていれば、核となる価値観が近いと言えます。逆に違いがあるカテゴリは、お互いが補い合える可能性を持っています。\n\n大切なのはスコアの数字よりも、「なぜそのスコアになったか」を語り合うことです。その会話自体が、二人の相互理解を深める最良の機会になるでしょう。`,
@@ -249,5 +237,56 @@ export function generateFallbackReport(input: FallbackInput): ReportJson {
       title: "最後にカウンセラーからのメッセージ",
       text: `この診断を最後まで受けてくださり、ありがとうございます。100問すべてに向き合ったこと自体が、自分自身を理解しようとする素敵な一歩です。\n\nあなたの「${mainType}」という結果は、あなたが日々の生活の中で大切にしていること、無意識に優先していることの表れです。どんなタイプにも良い面があり、正解・不正解はありません。\n\n${highLabels.join("や")}を大切にするあなたの価値観は、あなたらしさそのものです。この結果を通じて、自分が何を求め、何に安心し、何にこだわりを持っているのかを、あらためて感じ取っていただければ幸いです。\n\nパートナーとの出会いにおいて最も大切なのは、「自分を知っていること」です。自分の価値観を言語化できるあなたは、すでにその準備ができています。\n\n焦る必要はありません。あなたのペースで、あなたらしい出会いを見つけてください。この診断が、そのきっかけの一つになれば、これ以上嬉しいことはありません。\n\n素敵な未来を心から応援しています。`,
     },
+  };
+}
+
+/**
+ * 四柱推命セクション生成（生年月日がある場合は実計算、なければスコアベース）
+ */
+function buildFourPillarsSection(
+  profile: Record<string, string>,
+  scores: CategoryScores,
+  highCategories: string[],
+): { title: string; text: string } {
+  const birthDate = profile.birthDate || "";
+  const pillars = calculateFourPillars(birthDate);
+
+  if (pillars) {
+    // 生年月日から実際に四柱推命を計算
+    const balanceText = Object.entries(pillars.elementBalance)
+      .map(([el, count]) => `${el}:${count}`)
+      .join("　");
+
+    const integrated = buildIntegratedInsight(pillars, scores, highCategories);
+
+    return {
+      title: "四柱推命から見るあなたの本質",
+      text: `あなたの生年月日（${birthDate}）から四柱推命の命式を算出しました。\n\n【命式】\n年柱：${pillars.yearStem.name}${pillars.yearBranch.name}（${pillars.yearStem.reading}の${pillars.yearBranch.animal}）\n月柱：${pillars.monthStem.name}${pillars.monthBranch.name}（${pillars.monthStem.reading}の${pillars.monthBranch.animal}）\n日柱：${pillars.dayStem.name}${pillars.dayBranch.name}（${pillars.dayStem.reading}の${pillars.dayBranch.animal}）\n\n【五行バランス】\n${balanceText}\n\n【あなたの本命：${pillars.mainElement}（${pillars.dayStem.name}）】\n${pillars.personalityInsight}\n\n【恋愛・パートナーシップの傾向】\n${pillars.loveInsight}\n\n【価値観との統合分析】${integrated}\n\n【相性の良い五行】\n${pillars.compatibleElements.map(el => `・${el}`).join("\n")}\n\n【成長を促す五行（補い合える関係）】\n${pillars.challengeElements.map(el => `・${el}`).join("\n")}\n\n※ 四柱推命は統計学に基づく参考情報です。最も大切なのは、実際の対話を通じて相手を知ることです。`,
+    };
+  }
+
+  // 生年月日がない場合はスコアベースで五行を推定
+  const elementMap: [string, string, string[]][] = [
+    ["木", "成長・発展・仁愛", ["growth", "curiosity"]],
+    ["火", "情熱・表現・礼節", ["communication", "society"]],
+    ["土", "安定・信頼・誠実", ["family", "selfcare"]],
+    ["金", "正義・決断・実行", ["money", "career"]],
+    ["水", "知恵・柔軟・感性", ["leisure", "food"]],
+  ];
+
+  // スコアから推定五行を計算
+  const elementScores = elementMap.map(([el, desc, cats]) => ({
+    element: el,
+    description: desc,
+    score: cats.reduce((sum, c) => sum + (scores[c] || 0), 0),
+  })).sort((a, b) => b.score - a.score);
+
+  const dominant = elementScores[0];
+  const secondary = elementScores[1];
+  const weak = elementScores[elementScores.length - 1];
+
+  return {
+    title: "五行バランスから見るあなたの傾向",
+    text: `生年月日が未入力のため、100問の回答パターンから五行（木・火・土・金・水）の傾向を推定しました。\n\n【あなたの推定主要五行：${dominant.element}】\n${dominant.description}のエネルギーが最も強く表れています。\n\n副次的に「${secondary.element}」（${secondary.description}）の傾向も持ち合わせています。この組み合わせは、${dominant.element}の力強さに${secondary.element}の深みが加わった独特の個性です。\n\n一方「${weak.element}」（${weak.description}）のエネルギーは控えめです。パートナーがこの要素を持っていると、自然と補い合える関係になるでしょう。\n\n五行の全バランス：\n${elementScores.map(e => `${e.element}（${e.description}）：${"■".repeat(Math.round(e.score / 10))}${"□".repeat(Math.max(0, 10 - Math.round(e.score / 10)))} ${e.score}pt`).join("\n")}\n\n※ より正確な四柱推命は生年月日の入力が必要です。プロフィールで生年月日を入力すると、天干地支や命式に基づいた詳細な鑑定結果が表示されます。`,
   };
 }
