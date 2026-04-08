@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { ReportJson } from "@/types";
 import { CATEGORY_MAP } from "@/config/categories";
+
+const DeepDiveChat = lazy(() => import("@/components/DeepDiveChat"));
 
 interface ScoreData {
   categoryScores: Record<string, number>;
@@ -41,6 +43,10 @@ export default function ResultPage({
   const [answers, setAnswers] = useState<AnswerItem[] | null>(null);
   const [showAnswers, setShowAnswers] = useState(false);
   const [loadingAnswers, setLoadingAnswers] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatContext, setChatContext] = useState<{ title: string; text: string } | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // セッションIDの下6桁を共有コードとして使用
@@ -133,6 +139,55 @@ export default function ResultPage({
     window.print();
   }
 
+  function openDeepDive(title?: string, text?: string) {
+    if (title && text) {
+      setChatContext({ title, text });
+    } else {
+      setChatContext(null);
+    }
+    setChatOpen(true);
+  }
+
+  async function handleRegenerate() {
+    if (regenerating) return;
+    if (!confirm("診断結果を再生成しますか？AIが別の切り口で新しい結果を作成します。")) return;
+    setRegenerating(true);
+    try {
+      const res = await fetch(
+        `/api/diagnosis/session/${sessionId}/generate-report`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ forceRegenerate: true }),
+        }
+      );
+      const json = await res.json();
+      if (json.success) {
+        // 新しいレポートを取得
+        const reportRes = await fetch(`/api/diagnosis/session/${sessionId}/report`);
+        const reportJson = await reportRes.json();
+        if (reportJson.success) {
+          setReport(reportJson.data.report);
+          setScores(reportJson.data.scores);
+        }
+      } else {
+        alert(json.error || "再生成に失敗しました");
+      }
+    } catch {
+      alert("再生成中にエラーが発生しました");
+    }
+    setRegenerating(false);
+  }
+
+  function toggleCategory(catId: string) {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -152,6 +207,18 @@ export default function ResultPage({
 
   return (
     <div className="flex flex-col gap-6 pb-12 print:gap-4">
+      {/* 深掘りチャット */}
+      {chatOpen && (
+        <Suspense fallback={null}>
+          <DeepDiveChat
+            sessionId={sessionId}
+            sectionContext={chatContext?.text}
+            sectionTitle={chatContext?.title}
+            onClose={() => setChatOpen(false)}
+          />
+        </Suspense>
+      )}
+
       {/* ヘッダー */}
       <div className="text-center bg-gradient-to-b from-warm-200 to-background rounded-2xl p-6 -mx-4 print:rounded-none print:bg-warm-100">
         <p className="text-xs text-text-muted mb-1">あなたの診断結果</p>
@@ -176,13 +243,31 @@ export default function ResultPage({
             &#128438; 印刷・PDF保存
           </button>
         </div>
-        <button
-          onClick={handleDownloadJson}
-          className="flex items-center justify-center gap-1.5 px-4 py-3 bg-warm-50 border border-warm-200 text-warm-600 rounded-xl text-sm active:scale-95 transition-transform"
-        >
-          &#128190; データをダウンロード（JSON）
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={handleDownloadJson}
+            className="flex items-center justify-center gap-1.5 px-4 py-3 bg-warm-50 border border-warm-200 text-warm-600 rounded-xl text-sm active:scale-95 transition-transform"
+          >
+            &#128190; データDL（JSON）
+          </button>
+          <button
+            onClick={handleRegenerate}
+            disabled={regenerating}
+            className="flex items-center justify-center gap-1.5 px-4 py-3 bg-warm-50 border border-warm-200 text-warm-600 rounded-xl text-sm active:scale-95 transition-transform disabled:opacity-50"
+          >
+            &#128260; {regenerating ? "再生成中..." : "結果を再生成"}
+          </button>
+        </div>
       </div>
+
+      {/* AIに深掘りで聞くボタン */}
+      <button
+        onClick={() => openDeepDive()}
+        className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-gradient-to-r from-primary/90 to-primary text-white rounded-2xl text-sm font-bold active:scale-[0.98] transition-transform shadow-sm print:hidden"
+      >
+        <span className="text-lg">&#128172;</span>
+        この診断結果をAIに深掘りして聞く
+      </button>
 
       {/* パートナー比較セクション */}
       <div className="bg-warm-50 rounded-2xl p-5 border-2 border-warm-300 print:hidden">
@@ -212,7 +297,7 @@ export default function ResultPage({
       </div>
 
       {/* 全体タイプ解説 */}
-      <Section title={report.overallType.title}>
+      <Section title={report.overallType.title} onDeepDive={() => openDeepDive(report.overallType.title, report.overallType.text)}>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.overallType.text}</p>
       </Section>
 
@@ -261,23 +346,44 @@ export default function ResultPage({
 
       {/* 10カテゴリ別フィードバック */}
       <Section title="カテゴリ別フィードバック">
-        <div className="space-y-4">
-          {report.categoryFeedbacks.map((fb) => (
-            <div key={fb.categoryId} className="border-b border-border pb-4 last:border-0">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-warm-800">{fb.title}</h4>
-                <span className="text-xs text-text-muted">
-                  {fb.score >= 40 ? "とても強い" : fb.score >= 35 ? "強い" : fb.score >= 25 ? "ふつう" : fb.score >= 20 ? "おおらか" : "とてもおおらか"}
-                </span>
+        <div className="space-y-3">
+          {report.categoryFeedbacks.map((fb) => {
+            const isExpanded = expandedCategories.has(fb.categoryId);
+            return (
+              <div key={fb.categoryId} className="border border-border rounded-xl overflow-hidden">
+                <button
+                  onClick={() => toggleCategory(fb.categoryId)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-warm-50/50 text-left active:bg-warm-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <h4 className="text-sm font-medium text-warm-800 truncate">{fb.title}</h4>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs text-text-muted">
+                      {fb.score >= 40 ? "とても強い" : fb.score >= 35 ? "強い" : fb.score >= 25 ? "ふつう" : fb.score >= 20 ? "おおらか" : "とてもおおらか"}
+                    </span>
+                    <span className="text-xs text-primary">{isExpanded ? "▲" : "▼"}</span>
+                  </div>
+                </button>
+                {isExpanded && (
+                  <div className="px-4 py-3 border-t border-border">
+                    <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{fb.text}</p>
+                    <button
+                      onClick={() => openDeepDive(fb.title, fb.text)}
+                      className="mt-3 flex items-center gap-1.5 text-xs text-primary font-medium active:scale-95 transition-transform print:hidden"
+                    >
+                      <span>&#128172;</span> このカテゴリを深掘りする
+                    </button>
+                  </div>
+                )}
               </div>
-              <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{fb.text}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Section>
 
       {/* 理想のパートナー像 */}
-      <Section title={report.idealPartnerAnalysis.title}>
+      <Section title={report.idealPartnerAnalysis.title} onDeepDive={() => openDeepDive(report.idealPartnerAnalysis.title, report.idealPartnerAnalysis.text)}>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.idealPartnerAnalysis.text}</p>
       </Section>
 
@@ -304,37 +410,37 @@ export default function ResultPage({
       )}
 
       {/* 出会いのヒント */}
-      <Section title={report.encounterHints.title}>
+      <Section title={report.encounterHints.title} onDeepDive={() => openDeepDive(report.encounterHints.title, report.encounterHints.text)}>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.encounterHints.text}</p>
       </Section>
 
       {/* お金観深層分析 */}
-      <Section title={report.moneyAnalysis.title}>
+      <Section title={report.moneyAnalysis.title} onDeepDive={() => openDeepDive(report.moneyAnalysis.title, report.moneyAnalysis.text)}>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.moneyAnalysis.text}</p>
       </Section>
 
       {/* 恋愛傾向・結婚観 */}
-      <Section title={report.loveAndMarriageAnalysis.title}>
+      <Section title={report.loveAndMarriageAnalysis.title} onDeepDive={() => openDeepDive(report.loveAndMarriageAnalysis.title, report.loveAndMarriageAnalysis.text)}>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.loveAndMarriageAnalysis.text}</p>
       </Section>
 
       {/* 地域相性（新セクション） */}
       {report.regionalCompatibility && (
-        <Section title={`&#127968; ${report.regionalCompatibility.title}`}>
+        <Section title={`&#127968; ${report.regionalCompatibility.title}`} onDeepDive={() => openDeepDive(report.regionalCompatibility.title, report.regionalCompatibility.text)}>
           <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.regionalCompatibility.text}</p>
         </Section>
       )}
 
       {/* 四柱推命（新セクション） */}
       {report.fourPillarsInsight && (
-        <Section title={`&#9654; ${report.fourPillarsInsight.title}`}>
+        <Section title={`&#9654; ${report.fourPillarsInsight.title}`} onDeepDive={() => openDeepDive(report.fourPillarsInsight.title, report.fourPillarsInsight.text)}>
           <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.fourPillarsInsight.text}</p>
         </Section>
       )}
 
       {/* パートナー比較の見方（新セクション） */}
       {report.partnerCheckGuide && (
-        <Section title={`&#129309; ${report.partnerCheckGuide.title}`}>
+        <Section title={`&#129309; ${report.partnerCheckGuide.title}`} onDeepDive={() => openDeepDive(report.partnerCheckGuide.title, report.partnerCheckGuide.text)}>
           <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.partnerCheckGuide.text}</p>
         </Section>
       )}
@@ -419,11 +525,19 @@ export default function ResultPage({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, onDeepDive }: { title: string; children: React.ReactNode; onDeepDive?: () => void }) {
   return (
     <div className="bg-surface rounded-2xl p-5 border border-border">
       <h3 className="text-base font-bold text-warm-800 mb-3" dangerouslySetInnerHTML={{ __html: title }} />
       {children}
+      {onDeepDive && (
+        <button
+          onClick={onDeepDive}
+          className="mt-4 flex items-center gap-1.5 text-xs text-primary font-medium active:scale-95 transition-transform print:hidden"
+        >
+          <span>&#128172;</span> ここを深掘りして聞く
+        </button>
+      )}
     </div>
   );
 }

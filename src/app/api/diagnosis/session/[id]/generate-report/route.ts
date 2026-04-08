@@ -99,6 +99,8 @@ export async function POST(
     if (session.profile) {
       const p = session.profile;
       if (p.birthDate) profile.birthDate = p.birthDate;
+      if (p.gender) profile.gender = p.gender;
+      if (p.ageRange) profile.ageRange = p.ageRange;
       if (p.birthPlace) profile.birthPlace = p.birthPlace;
       if (p.currentResidence) profile.currentResidence = p.currentResidence;
       if (p.favoriteMusic) profile.favoriteMusic = p.favoriteMusic;
