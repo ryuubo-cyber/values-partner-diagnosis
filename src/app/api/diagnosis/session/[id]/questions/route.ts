@@ -20,9 +20,10 @@ export async function GET(
       );
     }
 
-    // セッション存在チェック
+    // セッション＋プロフィール取得
     const session = await prisma.diagnosisSession.findUnique({
       where: { id },
+      include: { profile: true },
     });
     if (!session) {
       return NextResponse.json(
@@ -42,6 +43,9 @@ export async function GET(
       orderBy: { displayOrder: "asc" },
       take: QUESTIONS_PER_SET,
     });
+
+    // 既婚・子供ありユーザーに不要な質問を自動回答に設定
+    const autoAnswerMap = buildAutoAnswerMap(session.profile?.familyStructure || "");
 
     // セッションIDでカテゴリ内の質問順序をシャッフル
     const shuffled = shuffleQuestionsForSession(questions, id, category.id);
@@ -70,6 +74,7 @@ export async function GET(
           displayOrder: i + 1,
           questionText: getQuestionVariant(q.id, id) || q.questionText,
           existingAnswer: answerMap[q.id] || null,
+          autoAnswer: autoAnswerMap[q.id] || null,
         })),
         answerScale: ANSWER_SCALE,
       },
@@ -81,4 +86,35 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+/**
+ * 既婚・子供ありのユーザーに対して、文脈的に不適切な質問を自動回答に設定
+ * - 既婚者: 「将来は家庭を持ちたい」「結婚は人生の大きな目標」をスキップ
+ * - 子供あり: 「子どもを持つことについて考えた」をスキップ
+ */
+function buildAutoAnswerMap(familyStructure: string): Record<string, number> {
+  const map: Record<string, number> = {};
+  if (!familyStructure) return map;
+
+  const isMarried = familyStructure.includes("既婚");
+  const hasChildren =
+    familyStructure.includes("子供あり") ||
+    familyStructure.includes("シングルマザー") ||
+    familyStructure.includes("シングルファーザー") ||
+    familyStructure.includes("子供と暮らし");
+
+  if (isMarried) {
+    // q021: 将来は家庭を持ちたいと思っている → すでに家庭がある
+    map["q021"] = 5;
+    // q028: 結婚は人生の大きな目標のひとつだ → すでに結婚している
+    map["q028"] = 4;
+  }
+
+  if (hasChildren) {
+    // q026: 子どもを持つことについて具体的に考えたことがある → すでに子供がいる
+    map["q026"] = 5;
+  }
+
+  return map;
 }

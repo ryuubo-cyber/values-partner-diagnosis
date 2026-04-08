@@ -67,6 +67,27 @@ export async function POST(
       where: { sessionId: id },
     });
 
+    // 質問テキストを取得（個別質問分析用）
+    const questions = await prisma.diagnosisQuestion.findMany({
+      where: { activeFlag: true },
+    });
+    const questionMap = new Map(questions.map((q) => [q.id, q]));
+
+    // 強く共感/否定している質問を抽出
+    const strongAgrees: Array<{ questionText: string; categoryId: string; answer: number }> = [];
+    const strongDisagrees: Array<{ questionText: string; categoryId: string; answer: number }> = [];
+    for (const ans of answers) {
+      const q = questionMap.get(ans.questionId);
+      if (!q) continue;
+      // reverseScoreの場合は逆転して判定
+      const effective = q.reverseScore ? 6 - ans.answer : ans.answer;
+      if (effective === 5) {
+        strongAgrees.push({ questionText: q.questionText, categoryId: ans.categoryId, answer: ans.answer });
+      } else if (effective === 1) {
+        strongDisagrees.push({ questionText: q.questionText, categoryId: ans.categoryId, answer: ans.answer });
+      }
+    }
+
     // スコア計算
     const categoryScores = calculateCategoryScores(answers);
     const weightedScores = calculateWeightedScores(categoryScores);
@@ -126,7 +147,7 @@ export async function POST(
       if (p.moneyLiteracy) profile.moneyLiteracy = p.moneyLiteracy;
     }
 
-    // AIレポート生成（再生成時はHaikuモデルで高速化）
+    // AIレポート生成（質問レベル分析データも渡す）
     const { reportJson, modelName, isFallback } = await generateAIReport(
       {
         profile,
@@ -135,6 +156,8 @@ export async function POST(
         lowCategories,
         mainType,
         subType,
+        strongAgrees,
+        strongDisagrees,
       },
       forceRegenerate
     );

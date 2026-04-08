@@ -16,14 +16,15 @@ export async function GET(request: Request) {
       );
     }
 
+    // セッション・スコア・プロフィール・全回答を一括取得
     const [sessionA, sessionB] = await Promise.all([
       prisma.diagnosisSession.findUnique({
         where: { id: idA },
-        include: { score: true, report: true },
+        include: { score: true, report: true, profile: true, answers: true },
       }),
       prisma.diagnosisSession.findUnique({
         where: { id: idB },
-        include: { score: true, report: true },
+        include: { score: true, report: true, profile: true, answers: true },
       }),
     ]);
 
@@ -42,23 +43,21 @@ export async function GET(request: Request) {
       const scoreA = scoresA[catId] ?? 0;
       const scoreB = scoresB[catId] ?? 0;
       const diff = Math.abs(scoreA - scoreB);
-      // 厳格基準: 差5以下=high, 差10以下=mid, それ以外=low
       return {
         categoryId: catId,
         label: CATEGORY_MAP[catId]?.label || catId,
         scoreA,
         scoreB,
         diff,
-        match: diff <= 5 ? "high" : diff <= 10 ? "mid" : "low",
+        match: diff <= 5 ? ("high" as const) : diff <= 10 ? ("mid" as const) : ("low" as const),
       };
     });
 
-    // 総合相性スコア（厳格化: 70以上なら高い相性）
+    // 総合相性スコア（厳格化: 0.8x で 70以上は本当に近い人だけ）
     const totalDiff = categoryDiffs.reduce((sum, c) => sum + c.diff, 0);
     const maxDiff = categoryDiffs.length * 40;
     const rawScore = (1 - totalDiff / maxDiff) * 100;
-    // 厳格化: スコアを0-100に分布させるが、甘くならないよう補正
-    const compatibilityScore = Math.round(Math.max(0, Math.min(100, rawScore * 0.9 + 5)));
+    const compatibilityScore = Math.round(Math.max(0, Math.min(100, rawScore * 0.8)));
 
     // 特に相性が良いカテゴリ（差が5以下）
     const strongMatches = categoryDiffs
@@ -72,12 +71,71 @@ export async function GET(request: Request) {
       .sort((a, b) => b.diff - a.diff)
       .slice(0, 3);
 
-    // 関係タイプ別相性（厳格化 + 結婚追加）
-    const romanceScore = calcRelationScore(categoryDiffs, ["money", "communication", "family", "selfcare", "lifestyle"]);
-    const marriageScore = calcRelationScore(categoryDiffs, ["money", "family", "communication", "lifestyle", "career"]);
+    // 関係タイプ別相性（厳格化: 0.75x+5）
+    const romanceScore = calcRelationScore(categoryDiffs, ["money", "communication", "family", "selfcare", "leisure"]);
+    const marriageScore = calcRelationScore(categoryDiffs, ["money", "family", "communication", "food", "career"]);
     const businessScore = calcRelationScore(categoryDiffs, ["career", "growth", "money", "curiosity"]);
     const friendshipScore = calcRelationScore(categoryDiffs, ["leisure", "society", "curiosity", "communication"]);
     const clientScore = calcRelationScore(categoryDiffs, ["career", "money", "communication", "growth"]);
+
+    // ===== 質問レベルの差分分析 =====
+    // 質問テキストも取得
+    const questions = await prisma.diagnosisQuestion.findMany({
+      where: { activeFlag: true },
+      orderBy: { displayOrder: "asc" },
+    });
+    const questionMap = new Map(questions.map((q) => [q.id, q]));
+
+    // 回答をマップ化
+    const answersMapA = new Map(sessionA.answers.map((a) => [a.questionId, a.answer]));
+    const answersMapB = new Map(sessionB.answers.map((a) => [a.questionId, a.answer]));
+
+    // 各質問の差分を計算
+    const questionDiffs = questions
+      .map((q) => {
+        const ansA = answersMapA.get(q.id) ?? 0;
+        const ansB = answersMapB.get(q.id) ?? 0;
+        // reverseScore の場合は逆転させた値で比較（実質的な価値観の方向性）
+        const effectiveA = q.reverseScore ? 6 - ansA : ansA;
+        const effectiveB = q.reverseScore ? 6 - ansB : ansB;
+        const diff = Math.abs(effectiveA - effectiveB);
+        return {
+          questionId: q.id,
+          categoryId: q.categoryId,
+          categoryLabel: CATEGORY_MAP[q.categoryId]?.label || q.categoryId,
+          questionText: q.questionText,
+          answerA: ansA,
+          answerB: ansB,
+          effectiveDiff: diff,
+        };
+      })
+      .sort((a, b) => b.effectiveDiff - a.effectiveDiff);
+
+    // 大きなズレ（差3以上 = 価値観が真逆に近い）
+    const bigGapQuestions = questionDiffs
+      .filter((q) => q.effectiveDiff >= 3)
+      .slice(0, 10);
+
+    // 完全一致または非常に近い質問（差0-1）
+    const closeQuestions = questionDiffs
+      .filter((q) => q.effectiveDiff <= 1)
+      .slice(0, 5);
+
+    // カテゴリ別の質問ズレ集計
+    const categoryQuestionGaps: Record<string, { total: number; bigGaps: number }> = {};
+    for (const qd of questionDiffs) {
+      if (!categoryQuestionGaps[qd.categoryId]) {
+        categoryQuestionGaps[qd.categoryId] = { total: 0, bigGaps: 0 };
+      }
+      categoryQuestionGaps[qd.categoryId].total += qd.effectiveDiff;
+      if (qd.effectiveDiff >= 3) {
+        categoryQuestionGaps[qd.categoryId].bigGaps += 1;
+      }
+    }
+
+    // ===== プロフィール情報 =====
+    const profileA = extractProfile(sessionA.profile);
+    const profileB = extractProfile(sessionB.profile);
 
     return NextResponse.json({
       success: true,
@@ -87,12 +145,14 @@ export async function GET(request: Request) {
           shareCode: idA.slice(-6).toUpperCase(),
           mainType: sessionA.score.mainType,
           subType: sessionA.score.subType,
+          profile: profileA,
         },
         personB: {
           sessionId: idB,
           shareCode: idB.slice(-6).toUpperCase(),
           mainType: sessionB.score.mainType,
           subType: sessionB.score.subType,
+          profile: profileB,
         },
         compatibilityScore,
         categoryDiffs,
@@ -104,6 +164,11 @@ export async function GET(request: Request) {
           business: businessScore,
           friendship: friendshipScore,
           client: clientScore,
+        },
+        questionAnalysis: {
+          bigGapQuestions,
+          closeQuestions,
+          categoryQuestionGaps,
         },
       },
     });
@@ -123,7 +188,24 @@ function calcRelationScore(
   const relevant = diffs.filter((d) => targetCategories.includes(d.categoryId));
   if (relevant.length === 0) return 50;
   const avgDiff = relevant.reduce((sum, d) => sum + d.diff, 0) / relevant.length;
-  // 厳格化: 差が大きいほどスコアが急激に下がるよう補正
+  // 厳格化: 0.75x + 5 で70以上が出にくくする
   const rawScore = (1 - avgDiff / 40) * 100;
-  return Math.round(Math.max(0, Math.min(100, rawScore * 0.85 + 10)));
+  return Math.round(Math.max(0, Math.min(100, rawScore * 0.75 + 5)));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractProfile(profile: any): Record<string, string> {
+  if (!profile) return {};
+  const result: Record<string, string> = {};
+  const fields = [
+    "birthDate", "gender", "ageRange", "birthPlace", "currentResidence",
+    "favoriteMusic", "occupation", "familyStructure", "lifestyle",
+    "smartphone", "snsUsage", "foodPreference", "financialHabit",
+    "friendCount", "parentRelationship", "hobbies", "transportation",
+    "personalityType", "clubActivity", "beautyInterest", "itLiteracy", "moneyLiteracy",
+  ];
+  for (const f of fields) {
+    if (profile[f]) result[f] = profile[f];
+  }
+  return result;
 }

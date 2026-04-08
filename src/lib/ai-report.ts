@@ -3,6 +3,12 @@ import { SYSTEM_PROMPT, buildReportPrompt } from "@/config/prompts";
 import { ReportJson, CategoryScores } from "@/types";
 import { generateFallbackReport } from "./fallback-report";
 
+export interface AnswerHighlight {
+  questionText: string;
+  categoryId: string;
+  answer: number; // 1-5
+}
+
 interface GenerateReportInput {
   profile: Record<string, string>;
   scores: CategoryScores;
@@ -10,6 +16,8 @@ interface GenerateReportInput {
   lowCategories: string[];
   mainType: string;
   subType: string;
+  strongAgrees?: AnswerHighlight[];  // 回答5の質問（強い共感）
+  strongDisagrees?: AnswerHighlight[]; // 回答1の質問（強い否定）
 }
 
 /**
