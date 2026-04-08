@@ -83,7 +83,18 @@ ${data.subType}
   - reasonもスコアに具体的に言及する
   - friendship: 友人として相性の良いタイプ
   - client: クライアント・仕事上の相手として相性の良いタイプ
-- encounterHints は安全性に配慮して具体的な場を提案する（詐欺リスクの高い場は絶対に推奨しない）
+- encounterHints は800字以上の完全オーダーメイド。以下を必ず含める：
+  - 現在は2026年4月。2026年の日本の出会い事情を踏まえる（マッチングアプリの進化、コミュニティ型出会い、趣味特化型イベントの増加、AIマッチングの普及等）
+  ${data.profile.ageRange ? `- このユーザーの年代は「${data.profile.ageRange}」。年代に合った現実的な出会い方を提案する` : ""}
+  ${data.profile.occupation ? `- 職業は「${data.profile.occupation}」。仕事環境を活かした出会いの可能性にも言及する` : ""}
+  ${data.profile.currentResidence ? `- 住まいは「${data.profile.currentResidence}」。地域で実際に利用できる場やイベントの傾向を踏まえる` : ""}
+  ${data.profile.lifestyle ? `- 生活スタイルは「${data.profile.lifestyle}」。このライフスタイルと自然に両立する出会い方を提案する` : ""}
+  - 高得点カテゴリ（${data.highCategories.join("、")}）の価値観を持つ相手と出会いやすい具体的な場面・活動を提案する
+  - 「日常の中で今日から実践できること」を1つ以上含める
+  - 「新しく始めると良い活動」を1つ以上含める
+  - 「あなたが陥りやすいパターンと避けるべきこと」を1つ以上含める
+  - ありきたりな「カフェ会」「料理教室」のような一般論は避け、このユーザーのスコアと属性に基づいた具体的提案にする
+  - 詐欺リスクの高い場（資産形成セミナー、FP講座、投資サークル等）は絶対に推奨しない
 - moneyAnalysis は500字以上で重点的に分析。moneyスコアだけでなく、career・family・lifestyleとの掛け合わせで深掘りする
 - loveAndMarriageAnalysis は500字以上。family・communication・selfcareのスコア組み合わせから独自の恋愛パターンを分析
 - regionalCompatibility は300字以上。スコアパターンから相性の良い日本の地域文化・県民性を分析${data.profile.birthPlace ? `。出身地（${data.profile.birthPlace}）との関連も考慮する` : ""}
