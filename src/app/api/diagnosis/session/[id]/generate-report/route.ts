@@ -10,6 +10,9 @@ import {
 import { judgeMainType, judgeSubType } from "@/lib/type-judge";
 import { generateAIReport } from "@/lib/ai-report";
 
+// Vercelサーバーレス関数のタイムアウトを60秒に延長
+export const maxDuration = 60;
+
 // POST /api/diagnosis/session/[id]/generate-report - 診断結果生成
 export async function POST(
   request: Request,
