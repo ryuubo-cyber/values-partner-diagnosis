@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, ANSWER_SCALE, QUESTIONS_PER_SET, TOTAL_SETS } from "@/config/categories";
+import { getQuestionVariant, shuffleQuestionsForSession } from "@/config/question-variants";
 
 // GET /api/diagnosis/session/[id]/questions?set=1 - 質問取得
 export async function GET(
@@ -42,6 +43,9 @@ export async function GET(
       take: QUESTIONS_PER_SET,
     });
 
+    // セッションIDでカテゴリ内の質問順序をシャッフル
+    const shuffled = shuffleQuestionsForSession(questions, id, category.id);
+
     // 既存の回答を取得（再開時に使用）
     const existingAnswers = await prisma.diagnosisAnswer.findMany({
       where: {
@@ -61,10 +65,10 @@ export async function GET(
         setNumber,
         categoryId: category.id,
         categoryLabel: category.label,
-        questions: questions.map((q) => ({
+        questions: shuffled.map((q, i) => ({
           questionId: q.id,
-          displayOrder: q.displayOrder,
-          questionText: q.questionText,
+          displayOrder: i + 1,
+          questionText: getQuestionVariant(q.id, id) || q.questionText,
           existingAnswer: answerMap[q.id] || null,
         })),
         answerScale: ANSWER_SCALE,

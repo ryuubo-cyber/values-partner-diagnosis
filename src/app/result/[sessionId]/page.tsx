@@ -14,6 +14,17 @@ interface ScoreData {
   lowCategories: string[];
 }
 
+interface AnswerItem {
+  questionId: string;
+  categoryId: string;
+  categoryLabel: string;
+  questionText: string;
+  answer: number | null;
+  reverseScore: boolean;
+}
+
+const ANSWER_LABELS = ["", "まったくあてはまらない", "あまりあてはまらない", "どちらともいえない", "ややあてはまる", "とてもあてはまる"];
+
 export default function ResultPage({
   params,
 }: {
@@ -27,6 +38,9 @@ export default function ResultPage({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [shareCode, setShareCode] = useState("");
+  const [answers, setAnswers] = useState<AnswerItem[] | null>(null);
+  const [showAnswers, setShowAnswers] = useState(false);
+  const [loadingAnswers, setLoadingAnswers] = useState(false);
 
   useEffect(() => {
     // セッションIDの下6桁を共有コードとして使用
@@ -72,15 +86,46 @@ export default function ResultPage({
     }
   }
 
+  async function handleLoadAnswers() {
+    if (answers) { setShowAnswers(!showAnswers); return; }
+    setLoadingAnswers(true);
+    try {
+      const res = await fetch(`/api/diagnosis/session/${sessionId}/answers-all`);
+      const json = await res.json();
+      if (json.success) {
+        setAnswers(json.data.answers);
+        setShowAnswers(true);
+      }
+    } catch { /* ignore */ }
+    setLoadingAnswers(false);
+  }
+
   function handleDownloadJson() {
     if (!report || !scores) return;
-    const data = { sessionId, report, scores, exportedAt: new Date().toISOString() };
+    const data = { sessionId, report, scores, answers, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `values-diagnosis-${shareCode}.json`;
     a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadAnswersCsv() {
+    if (!answers) return;
+    const header = "質問ID,カテゴリ,質問,回答(1-5),回答テキスト,逆転項目";
+    const rows = answers.map(a =>
+      `"${a.questionId}","${a.categoryLabel}","${a.questionText.replace(/"/g, '""')}",${a.answer || ""},${a.answer ? `"${ANSWER_LABELS[a.answer]}"` : ""},${a.reverseScore ? "○" : ""}`
+    );
+    const csv = [header, ...rows].join("\n");
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const el = document.createElement("a");
+    el.href = url;
+    el.download = `values-answers-${shareCode}.csv`;
+    el.click();
     URL.revokeObjectURL(url);
   }
 
@@ -251,6 +296,13 @@ export default function ResultPage({
         </div>
       </Section>
 
+      {/* 相性のまとめ（ナラティブ） */}
+      {report.compatibilityNarrative && (
+        <Section title={report.compatibilityNarrative.title}>
+          <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityNarrative.text}</p>
+        </Section>
+      )}
+
       {/* 出会いのヒント */}
       <Section title={report.encounterHints.title}>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.encounterHints.text}</p>
@@ -291,6 +343,61 @@ export default function ResultPage({
       <div className="bg-warm-100 rounded-2xl p-5 border border-warm-300">
         <h3 className="text-base font-bold text-warm-800 mb-3">{report.counselorMessage.title}</h3>
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.counselorMessage.text}</p>
+      </div>
+
+      {/* 100問の回答一覧 */}
+      <div className="print:hidden">
+        <button
+          onClick={handleLoadAnswers}
+          className="w-full bg-surface rounded-2xl p-4 border border-border text-left"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-warm-800">&#128221; 100問の回答を確認する</h3>
+            <span className="text-xs text-primary">{showAnswers ? "閉じる ▲" : loadingAnswers ? "読み込み中..." : "開く ▼"}</span>
+          </div>
+        </button>
+        {showAnswers && answers && (
+          <div className="bg-surface rounded-b-2xl border border-t-0 border-border p-4 -mt-2">
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={handleDownloadAnswersCsv}
+                className="flex-1 px-3 py-2 bg-warm-50 border border-warm-200 rounded-xl text-xs text-warm-700 active:scale-95 transition-transform"
+              >
+                &#128190; CSVダウンロード
+              </button>
+              <button
+                onClick={handleDownloadJson}
+                className="flex-1 px-3 py-2 bg-warm-50 border border-warm-200 rounded-xl text-xs text-warm-700 active:scale-95 transition-transform"
+              >
+                &#128190; JSONダウンロード
+              </button>
+            </div>
+            <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+              {answers.map((a, i) => {
+                const isNewCategory = i === 0 || a.categoryId !== answers[i - 1].categoryId;
+                return (
+                  <div key={a.questionId}>
+                    {isNewCategory && (
+                      <div className="sticky top-0 bg-warm-100 text-xs font-bold text-warm-700 px-2 py-1.5 rounded mt-2 first:mt-0">
+                        {a.categoryLabel}
+                      </div>
+                    )}
+                    <div className="flex gap-2 py-2 border-b border-border/50 text-xs">
+                      <span className="flex-1 text-text-light">{a.questionText}</span>
+                      <span className={`flex-shrink-0 w-16 text-right font-medium ${
+                        a.answer === null ? "text-text-muted" :
+                        a.answer >= 4 ? "text-primary" :
+                        a.answer <= 2 ? "text-warm-400" : "text-text-light"
+                      }`}>
+                        {a.answer !== null ? ANSWER_LABELS[a.answer] : "未回答"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* フッター */}
