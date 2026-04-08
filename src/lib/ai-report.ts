@@ -102,9 +102,9 @@ function mergeWithFallback(ai: ReportJson, fallback: ReportJson): ReportJson {
     idealPartnerAnalysis: ai.idealPartnerAnalysis?.text
       ? ai.idealPartnerAnalysis
       : fallback.idealPartnerAnalysis,
-    compatibilityTop5: ai.compatibilityTop5?.romance?.length
-      ? ai.compatibilityTop5
-      : fallback.compatibilityTop5,
+    compatibilityAnalysis: ai.compatibilityAnalysis?.romance?.text
+      ? ai.compatibilityAnalysis
+      : fallback.compatibilityAnalysis,
     encounterHints: ai.encounterHints?.text
       ? ai.encounterHints
       : fallback.encounterHints,

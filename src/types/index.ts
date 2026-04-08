@@ -92,12 +92,21 @@ export interface ReportJson {
     text: string;
   }>;
   idealPartnerAnalysis: { title: string; text: string };
-  compatibilityTop5: {
+  // 旧形式（後方互換）
+  compatibilityTop5?: {
     romance: Array<{ rank: number; typeName: string; reason: string }>;
     marriage: Array<{ rank: number; typeName: string; reason: string }>;
     business: Array<{ rank: number; typeName: string; reason: string }>;
     friendship: Array<{ rank: number; typeName: string; reason: string }>;
     client: Array<{ rank: number; typeName: string; reason: string }>;
+  };
+  // 新形式: 各関係タイプのナラティブ分析
+  compatibilityAnalysis: {
+    romance: { title: string; text: string };
+    marriage: { title: string; text: string };
+    business: { title: string; text: string };
+    friendship: { title: string; text: string };
+    client: { title: string; text: string };
   };
   compatibilityNarrative?: { title: string; text: string };
   encounterHints: { title: string; text: string };

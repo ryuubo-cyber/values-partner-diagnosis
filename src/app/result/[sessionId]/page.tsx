@@ -418,24 +418,47 @@ export default function ResultPage({
         <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.idealPartnerAnalysis.text}</p>
       </Section>
 
-      {/* 相性TOP5 */}
-      <Section title="相性の良いタイプ TOP5">
-        <div className="space-y-5">
-          <CompatibilityList title="&#10084; 恋愛相性" items={report.compatibilityTop5.romance} />
-          <CompatibilityList title="&#128149; 結婚相性" items={report.compatibilityTop5.marriage} />
-          <CompatibilityList title="&#128188; ビジネス相性" items={report.compatibilityTop5.business} />
-          {report.compatibilityTop5.friendship && (
-            <CompatibilityList title="&#128101; 友人相性" items={report.compatibilityTop5.friendship} />
-          )}
-          {report.compatibilityTop5.client && (
-            <CompatibilityList title="&#129309; クライアント相性" items={report.compatibilityTop5.client} />
-          )}
-        </div>
-      </Section>
+      {/* 相性分析（ナラティブ形式） */}
+      {report.compatibilityAnalysis && (
+        <>
+          <Section title={report.compatibilityAnalysis.romance.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.romance.title, report.compatibilityAnalysis.romance.text)}>
+            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.romance.text}</p>
+          </Section>
+          <Section title={report.compatibilityAnalysis.marriage.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.marriage.title, report.compatibilityAnalysis.marriage.text)}>
+            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.marriage.text}</p>
+          </Section>
+          <Section title={report.compatibilityAnalysis.business.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.business.title, report.compatibilityAnalysis.business.text)}>
+            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.business.text}</p>
+          </Section>
+          <Section title={report.compatibilityAnalysis.friendship.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.friendship.title, report.compatibilityAnalysis.friendship.text)}>
+            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.friendship.text}</p>
+          </Section>
+          <Section title={report.compatibilityAnalysis.client.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.client.title, report.compatibilityAnalysis.client.text)}>
+            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.client.text}</p>
+          </Section>
+        </>
+      )}
+
+      {/* 旧形式の相性TOP5（後方互換） */}
+      {!report.compatibilityAnalysis && report.compatibilityTop5 && (
+        <Section title="相性の良いタイプ">
+          <div className="space-y-5">
+            <CompatibilityList title="&#10084; 恋愛相性" items={report.compatibilityTop5.romance} />
+            <CompatibilityList title="&#128149; 結婚相性" items={report.compatibilityTop5.marriage} />
+            <CompatibilityList title="&#128188; ビジネス相性" items={report.compatibilityTop5.business} />
+            {report.compatibilityTop5.friendship && (
+              <CompatibilityList title="&#128101; 友人相性" items={report.compatibilityTop5.friendship} />
+            )}
+            {report.compatibilityTop5.client && (
+              <CompatibilityList title="&#129309; クライアント相性" items={report.compatibilityTop5.client} />
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* 相性のまとめ（ナラティブ） */}
       {report.compatibilityNarrative && (
-        <Section title={report.compatibilityNarrative.title}>
+        <Section title={report.compatibilityNarrative.title} onDeepDive={() => openDeepDive(report.compatibilityNarrative!.title, report.compatibilityNarrative!.text)}>
           <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityNarrative.text}</p>
         </Section>
       )}
