@@ -150,3 +150,99 @@ ${data.subType}
   "counselorMessage": { "title": "string", "text": "string" }
 }`;
 }
+
+// ========== 相性比較AI分析プロンプト ==========
+
+export const COMPARE_SYSTEM_PROMPT = `あなたは「価値観パートナー診断」の相性分析AIカウンセラーです。
+2人のユーザーの価値観診断結果（100問の回答・カテゴリスコア・プロフィール）を比較分析し、具体的で実用的な相性診断レポートを作成します。
+
+■ ルール
+- 共感的で温かいカウンセラー調
+- スコアは「こだわりの強さ」。高い＝良い、低い＝悪いではない
+- 差が大きい＝相性が悪い、ではなく「すり合わせが必要な領域」として中立的に解釈
+- 質問レベルのズレは点数以上にインパクトが大きい場合がある点を分析に反映
+- プロフィール（趣味・年齢・職業・性格タイプ・リテラシー等）を必ず分析に活用
+- 出力は必ずJSON形式で返す。JSON以外の文字は出力しない
+- 各セクション指定字数を守り、出力が長くなりすぎないこと`;
+
+export interface CompareAIInput {
+  profileA: Record<string, string>;
+  profileB: Record<string, string>;
+  scoresA: Record<string, number>;
+  scoresB: Record<string, number>;
+  mainTypeA: string;
+  mainTypeB: string;
+  subTypeA: string;
+  subTypeB: string;
+  compatibilityScore: number;
+  relationScores: Record<string, number>;
+  bigGapQuestions: Array<{
+    questionText: string;
+    categoryLabel: string;
+    answerA: number;
+    answerB: number;
+    effectiveDiff: number;
+  }>;
+  closeQuestions: Array<{
+    questionText: string;
+    categoryLabel: string;
+    answerA: number;
+    answerB: number;
+  }>;
+  categoryQuestionGaps: Record<string, { total: number; bigGaps: number }>;
+}
+
+export function buildComparePrompt(data: CompareAIInput): string {
+  return `以下の2人の価値観診断データを比較分析し、JSON形式で相性診断レポートを作成してください。
+
+【Aさんのプロフィール】
+${JSON.stringify(data.profileA, null, 2)}
+
+【Bさんのプロフィール】
+${JSON.stringify(data.profileB, null, 2)}
+
+【Aさんのタイプ】${data.mainTypeA}（${data.subTypeA}）
+【Bさんのタイプ】${data.mainTypeB}（${data.subTypeB}）
+
+【Aさんのカテゴリスコア】
+${JSON.stringify(data.scoresA, null, 2)}
+
+【Bさんのカテゴリスコア】
+${JSON.stringify(data.scoresB, null, 2)}
+
+【総合相性スコア】${data.compatibilityScore}点
+【関係タイプ別スコア】恋愛${data.relationScores.romance}点 / 結婚${data.relationScores.marriage}点 / 仕事${data.relationScores.business}点 / 友人${data.relationScores.friendship}点 / クライアント${data.relationScores.client}点
+
+【質問レベルで大きなズレがある項目（差3以上＝価値観が真逆に近い）】
+${data.bigGapQuestions.map((q) => `- 「${q.questionText}」（${q.categoryLabel}）A:${q.answerA} vs B:${q.answerB} 差${q.effectiveDiff}`).join("\n")}
+
+【質問レベルで一致している項目（差0-1）】
+${data.closeQuestions.map((q) => `- 「${q.questionText}」（${q.categoryLabel}）A:${q.answerA} vs B:${q.answerB}`).join("\n")}
+
+【カテゴリ別の質問ズレ集計】
+${Object.entries(data.categoryQuestionGaps).map(([catId, g]) => `${catId}: 合計ズレ${g.total} / 大きなズレ${g.bigGaps}件`).join("\n")}
+
+要件（各セクション指定字数を守ること）:
+- overallAnalysis: 250字程度。2人の相性の全体像。タイプの組み合わせとスコアパターンから見える関係性の特徴
+- strengthsAsCouple: 200字程度。2人の相性が良い部分。一致している質問項目から具体的な共通価値観を挙げる
+- challengeAreas: 200字程度。すり合わせが必要な部分。大きなズレがある質問項目を引用し、「点数以上の溝」を説明する
+- questionLevelInsight: 250字程度。100問の個別回答を分析した結果、カテゴリスコアの差だけでは見えない深層的な違い。「この質問で差${">"}3は、カテゴリスコア以上に価値観の根本的な違いを示す」のような洞察
+- romanceAdvice: 200字程度。恋愛関係としてのアドバイス。プロフィール（年齢・趣味・性格タイプ等）を踏まえた具体的な提案
+- marriageAdvice: 200字程度。結婚生活に向けたアドバイス。お金・家事・家族観の一致/不一致を踏まえて
+- communicationTips: 150字程度。2人のコミュニケーションスタイルの違いと、うまく付き合うコツ
+- profileCompatibility: 200字程度。プロフィール情報（趣味・移動手段・ITリテラシー・マネーリテラシー・美容関心・性格タイプ等）の比較から見える生活レベルの相性
+- counselorMessage: 150字程度。2人に向けたカウンセラーからの温かいメッセージ
+
+出力JSONスキーマ:
+{
+  "overallAnalysis": { "title": "string", "text": "string" },
+  "strengthsAsCouple": { "title": "string", "text": "string" },
+  "challengeAreas": { "title": "string", "text": "string" },
+  "questionLevelInsight": { "title": "string", "text": "string" },
+  "romanceAdvice": { "title": "string", "text": "string" },
+  "marriageAdvice": { "title": "string", "text": "string" },
+  "communicationTips": { "title": "string", "text": "string" },
+  "profileCompatibility": { "title": "string", "text": "string" },
+  "counselorMessage": { "title": "string", "text": "string" }
+}`;
+}
