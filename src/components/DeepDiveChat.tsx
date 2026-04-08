@@ -30,28 +30,26 @@ export default function DeepDiveChat({
 }: DeepDiveChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingText, setStreamingText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingText]);
+  }, [messages]);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
   async function sendMessage(text: string) {
-    if (!text.trim() || isStreaming) return;
+    if (!text.trim() || isLoading) return;
 
     const userMessage: ChatMessage = { role: "user", content: text.trim() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
-    setIsStreaming(true);
-    setStreamingText("");
+    setIsLoading(true);
 
     try {
       const res = await fetch(
@@ -66,60 +64,29 @@ export default function DeepDiveChat({
         }
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "チャットエラー");
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "チャットエラー");
       }
 
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error("ストリームが利用できません");
-
-      const decoder = new TextDecoder();
-      let fullText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") break;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.text) {
-                fullText += parsed.text;
-                setStreamingText(fullText);
-              }
-              if (parsed.error) {
-                throw new Error(parsed.error);
-              }
-            } catch (e) {
-              if (e instanceof SyntaxError) continue;
-              throw e;
-            }
-          }
-        }
-      }
-
-      setMessages([...newMessages, { role: "assistant", content: fullText }]);
-      setStreamingText("");
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: json.data.text },
+      ]);
     } catch (error) {
       console.error("Chat error:", error);
+      const errMsg = error instanceof Error ? error.message : "エラーが発生しました";
       setMessages([
         ...newMessages,
         {
           role: "assistant",
-          content: "申し訳ありません。エラーが発生しました。もう一度お試しください。",
+          content: `申し訳ありません。${errMsg}\nもう一度お試しください。`,
         },
       ]);
-      setStreamingText("");
     }
 
-    setIsStreaming(false);
+    setIsLoading(false);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -129,7 +96,7 @@ export default function DeepDiveChat({
     }
   }
 
-  const showSuggestions = messages.length === 0 && !isStreaming;
+  const showSuggestions = messages.length === 0 && !isLoading;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
@@ -203,16 +170,11 @@ export default function DeepDiveChat({
           </div>
         ))}
 
-        {/* ストリーミング中 */}
-        {isStreaming && (
+        {/* ローディング中 */}
+        {isLoading && (
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-2xl rounded-bl-md px-4 py-3 bg-warm-50 border border-warm-200 text-warm-800">
-              {streamingText ? (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {streamingText}
-                  <span className="inline-block w-1.5 h-4 bg-primary/60 ml-0.5 animate-pulse" />
-                </p>
-              ) : (
+              <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   {[0, 1, 2].map((i) => (
                     <div
@@ -222,7 +184,8 @@ export default function DeepDiveChat({
                     />
                   ))}
                 </div>
-              )}
+                <span className="text-xs text-text-muted">考え中...</span>
+              </div>
             </div>
           </div>
         )}
@@ -240,7 +203,8 @@ export default function DeepDiveChat({
             onKeyDown={handleKeyDown}
             placeholder="質問を入力..."
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-warm-800 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+            disabled={isLoading}
+            className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-warm-800 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 disabled:opacity-50"
             style={{ maxHeight: "120px" }}
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;
@@ -250,7 +214,7 @@ export default function DeepDiveChat({
           />
           <button
             onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isStreaming}
+            disabled={!input.trim() || isLoading}
             className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white disabled:opacity-40 active:scale-90 transition-transform"
           >
             <svg
