@@ -129,6 +129,10 @@ export async function POST(
       if (p.familyStructure) profile.familyStructure = p.familyStructure;
       if (p.lifestyle) profile.lifestyle = p.lifestyle;
       if (p.snsUsage) profile.snsUsage = p.snsUsage;
+      if (p.foodPreference) profile.foodPreference = p.foodPreference;
+      if (p.financialHabit) profile.financialHabit = p.financialHabit;
+      if (p.friendCount) profile.friendCount = p.friendCount;
+      if (p.parentRelationship) profile.parentRelationship = p.parentRelationship;
     }
 
     // スコアラベル付き

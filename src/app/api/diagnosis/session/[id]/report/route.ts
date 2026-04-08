@@ -14,6 +14,7 @@ export async function GET(
       include: {
         report: true,
         score: true,
+        profile: true,
       },
     });
 
@@ -43,12 +44,32 @@ export async function GET(
         }
       : null;
 
+    // プロフィール情報を整形（空文字でないフィールドのみ返す）
+    const profile: Record<string, string> = {};
+    if (session.profile) {
+      const p = session.profile;
+      if (p.birthDate) profile.birthDate = p.birthDate;
+      if (p.gender) profile.gender = p.gender;
+      if (p.ageRange) profile.ageRange = p.ageRange;
+      if (p.birthPlace) profile.birthPlace = p.birthPlace;
+      if (p.currentResidence) profile.currentResidence = p.currentResidence;
+      if (p.occupation) profile.occupation = p.occupation;
+      if (p.familyStructure) profile.familyStructure = p.familyStructure;
+      if (p.lifestyle) profile.lifestyle = p.lifestyle;
+      if (p.snsUsage) profile.snsUsage = p.snsUsage;
+      if (p.foodPreference) profile.foodPreference = p.foodPreference;
+      if (p.financialHabit) profile.financialHabit = p.financialHabit;
+      if (p.friendCount) profile.friendCount = p.friendCount;
+      if (p.parentRelationship) profile.parentRelationship = p.parentRelationship;
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         sessionId: id,
         scores,
         report: reportJson,
+        profile,
         modelName: session.report.modelName,
         generatedAt: session.report.generatedAt,
       },
