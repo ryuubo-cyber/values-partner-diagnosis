@@ -106,25 +106,26 @@ export async function POST(
 
 メインタイプ: ${scores.mainType}
 サブタイプ: ${scores.subType}
-高得点カテゴリ: ${(scores.highCategories as string[]).map(id => CATEGORY_MAP[id]?.label || id).join("、")}
-低得点カテゴリ: ${(scores.lowCategories as string[]).map(id => CATEGORY_MAP[id]?.label || id).join("、")}
+高得点カテゴリ: ${(scores.highCategories as string[]).map((cid: string) => CATEGORY_MAP[cid]?.label || cid).join("、")}
+低得点カテゴリ: ${(scores.lowCategories as string[]).map((cid: string) => CATEGORY_MAP[cid]?.label || cid).join("、")}
 
 【診断結果の要約】
 全体タイプ: ${reportJson.overallType?.title}
+${reportJson.overallType?.text ? `全体分析: ${reportJson.overallType.text.slice(0, 300)}...` : ""}
 理想のパートナー像: ${reportJson.idealPartnerAnalysis?.title}
 出会いのヒント: ${reportJson.encounterHints?.title}
 お金観分析: ${reportJson.moneyAnalysis?.title}
 恋愛・結婚分析: ${reportJson.loveAndMarriageAnalysis?.title}`;
 
     if (sectionContext) {
-      contextMessage += `\n\n【ユーザーが特に深掘りしたいセクション】\n${sectionContext}`;
+      contextMessage += `\n\n【ユーザーが特に深掘りしたいセクションの内容】\n${sectionContext}`;
     }
 
     // APIキーチェック
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return Response.json(
-        { success: false, error: "AI機能が利用できません" },
+        { success: false, error: "AI機能が利用できません。ANTHROPIC_API_KEYが設定されていません。" },
         { status: 503 }
       );
     }
@@ -132,8 +133,8 @@ export async function POST(
     const client = new Anthropic({ apiKey });
     const modelName = process.env.AI_MODEL_NAME || "claude-sonnet-4-20250514";
 
-    // ストリーミングレスポンス
-    const stream = await client.messages.stream({
+    // 非ストリーミングで呼び出し（Vercelサーバーレス互換）
+    const response = await client.messages.create({
       model: modelName,
       max_tokens: 2048,
       system: DEEP_DIVE_SYSTEM_PROMPT,
@@ -144,43 +145,18 @@ export async function POST(
       ],
     });
 
-    // ReadableStreamでSSE風に返す
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of stream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              const chunk = `data: ${JSON.stringify({ text: event.delta.text })}\n\n`;
-              controller.enqueue(encoder.encode(chunk));
-            }
-          }
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        } catch (err) {
-          console.error("Stream error:", err);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ error: "ストリーム中にエラーが発生しました" })}\n\n`)
-          );
-          controller.close();
-        }
-      },
-    });
+    const textBlock = response.content.find((b) => b.type === "text");
+    const text = textBlock && textBlock.type === "text" ? textBlock.text : "";
 
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
+    return Response.json({
+      success: true,
+      data: { text },
     });
   } catch (error) {
     console.error("Chat API error:", error);
+    const message = error instanceof Error ? error.message : "チャットエラーが発生しました";
     return Response.json(
-      { success: false, error: "チャットエラーが発生しました" },
+      { success: false, error: message },
       { status: 500 }
     );
   }
