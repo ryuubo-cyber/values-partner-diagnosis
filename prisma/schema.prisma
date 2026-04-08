@@ -43,6 +43,10 @@ model DiagnosisProfile {
   lifestyle        String @default("")
   smartphone       String @default("")
   snsUsage         String @default("")
+  foodPreference   String @default("")
+  financialHabit   String @default("")
+  friendCount      String @default("")
+  parentRelationship String @default("")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

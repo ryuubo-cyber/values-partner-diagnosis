@@ -36,6 +36,7 @@ export default function ResultPage({
   const router = useRouter();
   const [report, setReport] = useState<ReportJson | null>(null);
   const [scores, setScores] = useState<ScoreData | null>(null);
+  const [profile, setProfile] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -61,6 +62,7 @@ export default function ResultPage({
         if (json.success) {
           setReport(json.data.report);
           setScores(json.data.scores);
+          if (json.data.profile) setProfile(json.data.profile);
         } else {
           setError(json.error);
         }
@@ -182,6 +184,7 @@ export default function ResultPage({
         if (reportJson.success) {
           setReport(reportJson.data.report);
           setScores(reportJson.data.scores);
+          if (reportJson.data.profile) setProfile(reportJson.data.profile);
         }
       } else {
         alert(json.error || "再生成に失敗しました");
@@ -257,6 +260,11 @@ export default function ResultPage({
         <p className="text-sm text-primary font-medium">{report.subType}</p>
         <p className="text-xs text-text-muted mt-2">共有コード: <span className="font-mono font-bold tracking-widest text-warm-700">{shareCode}</span></p>
       </div>
+
+      {/* プロフィール表示 */}
+      {Object.keys(profile).length > 0 && (
+        <ProfileSection profile={profile} />
+      )}
 
       {/* エクスポート・共有ボタン */}
       <div className="flex flex-col gap-2 print:hidden">
@@ -591,6 +599,64 @@ function Section({ title, children, onDeepDive }: { title: string; children: Rea
         >
           <span>&#128172;</span> ここを深掘りして聞く
         </button>
+      )}
+    </div>
+  );
+}
+
+const PROFILE_LABELS: Record<string, string> = {
+  birthDate: "生年月日",
+  gender: "性別",
+  ageRange: "年代",
+  birthPlace: "出身地域",
+  currentResidence: "現在の住まい",
+  occupation: "職業",
+  familyStructure: "暮らし方",
+  lifestyle: "休日の過ごし方",
+  snsUsage: "よく使うSNS",
+  foodPreference: "食の傾向",
+  financialHabit: "お金の使い方",
+  friendCount: "友人関係",
+  parentRelationship: "親との関係",
+};
+
+function ProfileSection({ profile }: { profile: Record<string, string> }) {
+  const [expanded, setExpanded] = useState(false);
+  const entries = Object.entries(profile).filter(
+    ([key, val]) => val && PROFILE_LABELS[key]
+  );
+  if (entries.length === 0) return null;
+
+  const preview = entries.slice(0, 3);
+  const rest = entries.slice(3);
+
+  return (
+    <div className="bg-warm-50 rounded-2xl p-4 border border-warm-200 print:bg-warm-50">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between text-left"
+      >
+        <h3 className="text-sm font-bold text-warm-700">&#128100; あなたのプロフィール</h3>
+        <span className="text-xs text-primary">{expanded ? "閉じる ▲" : "詳細 ▼"}</span>
+      </button>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {preview.map(([key, val]) => (
+          <span key={key} className="inline-flex items-center gap-1 text-xs bg-white border border-warm-200 rounded-lg px-2 py-1 text-warm-700">
+            <span className="text-text-muted">{PROFILE_LABELS[key]}:</span> {val}
+          </span>
+        ))}
+        {!expanded && rest.length > 0 && (
+          <span className="text-xs text-text-muted">+{rest.length}項目</span>
+        )}
+      </div>
+      {expanded && rest.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {rest.map(([key, val]) => (
+            <span key={key} className="inline-flex items-center gap-1 text-xs bg-white border border-warm-200 rounded-lg px-2 py-1 text-warm-700">
+              <span className="text-text-muted">{PROFILE_LABELS[key]}:</span> {val}
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );

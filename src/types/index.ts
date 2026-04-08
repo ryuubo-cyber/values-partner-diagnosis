@@ -33,6 +33,10 @@ export interface ProfileInput {
   lifestyle?: string;
   smartphone?: string;
   snsUsage?: string;
+  foodPreference?: string;
+  financialHabit?: string;
+  friendCount?: string;
+  parentRelationship?: string;
 }
 
 // ========== セッション ==========
