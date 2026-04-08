@@ -96,6 +96,8 @@ const PROFILE_LABELS: Record<string, string> = {
   favoriteMusic: "好きな音楽",
   friendCount: "友人の数",
   parentRelationship: "親との関係",
+  meetingHistory: "今までの出会い方",
+  partnerMeetingWay: "パートナーとの出会いきっかけ",
 };
 
 const ANSWER_LABELS: Record<number, string> = {
