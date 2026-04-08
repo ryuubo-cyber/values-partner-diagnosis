@@ -36,7 +36,7 @@ export async function generateAIReport(
   const modelName = isRegenerate
     ? "claude-haiku-4-5-20251001"
     : (process.env.AI_MODEL_NAME || "claude-sonnet-4-20250514");
-  const maxTokens = isRegenerate ? 3000 : 4096;
+  const maxTokens = isRegenerate ? 4000 : 6000;
 
   try {
     const message = await client.messages.create({
@@ -56,13 +56,21 @@ export async function generateAIReport(
       throw new Error("No text block in response");
     }
 
-    // JSONパース
+    // JSONパース（途中切れ対策を含む）
     let jsonText = textBlock.text.trim();
     if (jsonText.startsWith("```")) {
       jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
     }
 
-    const parsed = JSON.parse(jsonText) as ReportJson;
+    let parsed: ReportJson;
+    try {
+      parsed = JSON.parse(jsonText) as ReportJson;
+    } catch {
+      // max_tokensで途中切れした場合、JSONを修復して再パースを試みる
+      console.warn("JSON parse failed, attempting repair...");
+      const repaired = repairTruncatedJson(jsonText);
+      parsed = JSON.parse(repaired) as ReportJson;
+    }
 
     if (!parsed.mainType || !parsed.overallType?.text) {
       throw new Error("Essential fields missing from AI response");
@@ -81,6 +89,49 @@ export async function generateAIReport(
       isFallback: true,
     };
   }
+}
+
+/**
+ * 途中切れしたJSONを修復する
+ * max_tokensで出力が切れた場合に閉じ括弧を補完
+ */
+function repairTruncatedJson(text: string): string {
+  let s = text.trim();
+  // 末尾の不完全な文字列を除去（途中の "text": "..." が切れている場合）
+  // 最後の完全なプロパティまで巻き戻す
+  const lastCompleteComma = s.lastIndexOf('",');
+  const lastCompleteBrace = s.lastIndexOf('"}');
+  const lastCompleteBracket = s.lastIndexOf('"]');
+  const lastGood = Math.max(lastCompleteComma, lastCompleteBrace, lastCompleteBracket);
+
+  if (lastGood > s.length * 0.5) {
+    // 切れた位置以降を除去
+    s = s.substring(0, lastGood + 2);
+  }
+
+  // 閉じ括弧を補完
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+  let escape = false;
+  for (const ch of s) {
+    if (escape) { escape = false; continue; }
+    if (ch === '\\') { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') openBraces++;
+    if (ch === '}') openBraces--;
+    if (ch === '[') openBrackets++;
+    if (ch === ']') openBrackets--;
+  }
+
+  // 不要な末尾のカンマを除去
+  s = s.replace(/,\s*$/, '');
+
+  for (let i = 0; i < openBrackets; i++) s += ']';
+  for (let i = 0; i < openBraces; i++) s += '}';
+
+  return s;
 }
 
 /**
