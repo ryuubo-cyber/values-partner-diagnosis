@@ -2,6 +2,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_MAP } from "@/config/categories";
 
+// Vercelサーバーレス関数のタイムアウトを60秒に延長
+export const maxDuration = 60;
+
 const DEEP_DIVE_SYSTEM_PROMPT = `あなたは「価値観診断カウンセラー」です。
 ユーザーは100問の価値観診断を受け、詳細な診断結果を持っています。
 あなたの役割は、診断結果をもとに、ユーザーが気になる部分を深掘りし、より具体的で実践的なアドバイスを提供することです。
