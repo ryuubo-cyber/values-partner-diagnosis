@@ -312,17 +312,25 @@ export default function ResultPage({
       <div className="bg-warm-50 rounded-2xl p-5 border-2 border-warm-300 print:hidden">
         <h3 className="text-base font-bold text-warm-800 mb-2">&#129309; パートナーと相性を比較する</h3>
         <p className="text-xs text-text-light mb-3 leading-relaxed">
-          パートナー候補にも診断を受けてもらい、それぞれの共有コードを入力すると相性を分析できます。
+          パートナー候補にも診断を受けてもらい、相性比較ページでお互いの結果URLを入力すると詳細な相性分析ができます。
         </p>
+        <div className="bg-white rounded-xl p-3 border border-warm-200 mb-3 space-y-2">
+          <div className="text-xs text-text-muted leading-relaxed space-y-1">
+            <p>&#129302; <span className="font-medium text-warm-700">AI相性分析レポート</span> — 2人の診断結果をAIが総合分析</p>
+            <p>&#128680; <span className="font-medium text-warm-700">100問の質問レベル比較</span> — 個別の質問ごとの価値観のズレと一致を可視化</p>
+            <p>&#128100; <span className="font-medium text-warm-700">プロフィール比較</span> — 趣味・年齢・性格タイプなどの生活レベルの相性</p>
+            <p>&#128279; <span className="font-medium text-warm-700">結果の共有</span> — 比較結果URLを共有できます</p>
+          </div>
+        </div>
         <div className="bg-white rounded-xl p-3 border border-warm-200 mb-3">
-          <p className="text-xs text-text-muted mb-1">あなたの共有コード</p>
+          <p className="text-xs text-text-muted mb-1">あなたの結果URL</p>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-2xl font-bold tracking-widest text-primary">{shareCode}</span>
+            <span className="font-mono text-xs font-bold text-primary truncate flex-1">{typeof window !== "undefined" ? `${window.location.origin}/result/${sessionId}` : ""}</span>
             <button
               onClick={handleCopyLink}
-              className="text-xs text-primary border border-primary/30 rounded-lg px-2 py-1 active:scale-95 transition-transform"
+              className="text-xs text-primary border border-primary/30 rounded-lg px-2 py-1 active:scale-95 transition-transform shrink-0"
             >
-              {copied ? "✓" : "コピー"}
+              {copied ? "✓ コピー済" : "コピー"}
             </button>
           </div>
         </div>
@@ -624,6 +632,8 @@ const PROFILE_LABELS: Record<string, string> = {
   financialHabit: "お金の使い方",
   friendCount: "友人関係",
   parentRelationship: "親との関係",
+  meetingHistory: "今までの出会い方",
+  partnerMeetingWay: "パートナーとの出会いきっかけ",
 };
 
 function ProfileSection({ profile }: { profile: Record<string, string> }) {
