@@ -120,6 +120,8 @@ function ComparePage() {
   const searchParams = useSearchParams();
   const prefilledId = searchParams.get("a") || "";
 
+  const prefilledIdB = searchParams.get("b") || "";
+
   const [inputA, setInputA] = useState("");
   const [inputB, setInputB] = useState("");
   const [result, setResult] = useState<CompareResult | null>(null);
@@ -130,12 +132,20 @@ function ComparePage() {
   const [step, setStep] = useState<"input" | "result">("input");
   const [showAllQuestions, setShowAllQuestions] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (prefilledId) {
-      setInputA(prefilledId);
+    if (prefilledId) setInputA(prefilledId);
+    if (prefilledIdB) setInputB(prefilledIdB);
+  }, [prefilledId, prefilledIdB]);
+
+  // 両方のIDがURLにある場合は自動比較
+  useEffect(() => {
+    if (prefilledId && prefilledIdB && !result && !loading) {
+      handleCompareAuto(prefilledId, prefilledIdB);
     }
-  }, [prefilledId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefilledId, prefilledIdB]);
 
   // AI相性レポートを取得
   const fetchAIReport = useCallback(async (idA: string, idB: string) => {
@@ -155,6 +165,49 @@ function ComparePage() {
     }
     setAiLoading(false);
   }, []);
+
+  async function handleCompareAuto(rawA: string, rawB: string) {
+    const idA = extractSessionId(rawA);
+    const idB = extractSessionId(rawB);
+    if (!idA || !idB || idA === idB) return;
+    setInputA(rawA);
+    setInputB(rawB);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/diagnosis/compare?a=${idA}&b=${idB}`);
+      const json = await res.json();
+      if (json.success) {
+        setResult(json.data);
+        setStep("result");
+        fetchAIReport(idA, idB);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  }
+
+  function handleShareCompare() {
+    if (!result) return;
+    const url = `${window.location.origin}/compare?a=${result.personA.sessionId}&b=${result.personB.sessionId}`;
+    if (navigator.share) {
+      navigator.share({
+        title: "価値観パートナー相性診断の結果",
+        text: `相性スコア: ${result.compatibilityScore}点`,
+        url,
+      });
+    } else {
+      handleCopyCompareLink();
+    }
+  }
+
+  function handleCopyCompareLink() {
+    if (!result) return;
+    const url = `${window.location.origin}/compare?a=${result.personA.sessionId}&b=${result.personB.sessionId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   async function handleCompare() {
     const idA = extractSessionId(inputA);
@@ -495,8 +548,33 @@ function ComparePage() {
           )}
         </div>
 
+        {/* 共有 */}
+        <div className="bg-surface rounded-2xl p-5 border border-border">
+          <h3 className="text-base font-bold text-warm-800 mb-3">&#128279; この結果を共有</h3>
+          <div className="flex gap-3">
+            <Button
+              size="sm"
+              onClick={handleShareCompare}
+              className="flex-1"
+            >
+              {copied ? "コピー済み！" : "結果を共有する"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyCompareLink}
+              className="flex-1"
+            >
+              {copied ? "&#10003; コピー済み" : "URLをコピー"}
+            </Button>
+          </div>
+          <p className="text-xs text-text-muted mt-2">
+            共有URLを開くと、同じ比較結果を表示できます。
+          </p>
+        </div>
+
         <div className="flex flex-col gap-3 mt-2">
-          <Button variant="secondary" onClick={() => { setStep("input"); setResult(null); setAiReport(null); setShowAllQuestions(false); setShowProfile(false); }}>
+          <Button variant="secondary" onClick={() => { setStep("input"); setResult(null); setAiReport(null); setShowAllQuestions(false); setShowProfile(false); setCopied(false); }}>
             別の相手と比較する
           </Button>
           <Button variant="outline" onClick={() => router.push("/")}>

@@ -11,6 +11,7 @@ interface QuestionData {
   displayOrder: number;
   questionText: string;
   existingAnswer: number | null;
+  autoAnswer: number | null;
 }
 
 interface QuestionsResponse {
@@ -54,11 +55,13 @@ export default function DiagnosisPage({
         const json = await res.json();
         if (json.success) {
           setData(json.data);
-          // 既存の回答をセット
+          // 既存の回答 + 自動回答をセット
           const existing: Record<string, number> = {};
           for (const q of json.data.questions) {
             if (q.existingAnswer) {
               existing[q.questionId] = q.existingAnswer;
+            } else if (q.autoAnswer) {
+              existing[q.questionId] = q.autoAnswer;
             }
           }
           setAnswers(existing);
@@ -143,7 +146,11 @@ export default function DiagnosisPage({
     );
   }
 
+  // 自動回答の質問を除いた表示用質問リスト
+  const visibleQuestions = data.questions.filter((q) => !q.autoAnswer);
+  const autoAnsweredCount = data.questions.length - visibleQuestions.length;
   const answeredCount = Object.keys(answers).length;
+  const visibleAnsweredCount = answeredCount - autoAnsweredCount;
   const totalAnswered = (setNumber - 1) * QUESTIONS_PER_SET + answeredCount;
 
   return (
@@ -165,9 +172,16 @@ export default function DiagnosisPage({
         <div className="font-bold text-warm-800">{data.categoryLabel}</div>
       </div>
 
-      {/* 質問一覧 */}
+      {/* プロフィールによるスキップ通知 */}
+      {autoAnsweredCount > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-xs text-green-700">
+          &#10003; プロフィール情報から{autoAnsweredCount}問を自動回答しました
+        </div>
+      )}
+
+      {/* 質問一覧（自動回答を除く） */}
       <div className="space-y-6 mb-8">
-        {data.questions.map((q, idx) => (
+        {visibleQuestions.map((q, idx) => (
           <div
             key={q.questionId}
             className="bg-surface rounded-xl p-4 border border-border"
@@ -204,8 +218,8 @@ export default function DiagnosisPage({
         {submitting
           ? "送信中..."
           : setNumber < TOTAL_SETS
-          ? `次のカテゴリへ（${answeredCount}/${QUESTIONS_PER_SET}問回答済み）`
-          : `診断結果を生成する（${answeredCount}/${QUESTIONS_PER_SET}問回答済み）`}
+          ? `次のカテゴリへ（${visibleAnsweredCount}/${visibleQuestions.length}問回答済み）`
+          : `診断結果を生成する（${visibleAnsweredCount}/${visibleQuestions.length}問回答済み）`}
       </Button>
 
       {/* 前のカテゴリに戻るボタン */}
