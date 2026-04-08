@@ -159,14 +159,20 @@ export default function ResultPage({
     if (!confirm("診断結果を再生成しますか？AIが別の切り口で新しい結果を作成します。")) return;
     setRegenerating(true);
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 55000);
+
       const res = await fetch(
         `/api/diagnosis/session/${sessionId}/generate-report`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ forceRegenerate: true }),
+          signal: controller.signal,
         }
       );
+      clearTimeout(timeout);
+
       const json = await res.json();
       if (json.success) {
         setRegenerateCount(prev => prev + 1);
@@ -180,8 +186,26 @@ export default function ResultPage({
       } else {
         alert(json.error || "再生成に失敗しました");
       }
-    } catch {
-      alert("再生成中にエラーが発生しました");
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        // タイムアウトしたが、サーバー側で生成完了している可能性がある
+        // 少し待ってからレポートの再取得を試みる
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+          const reportRes = await fetch(`/api/diagnosis/session/${sessionId}/report`);
+          const reportJson = await reportRes.json();
+          if (reportJson.success) {
+            setRegenerateCount(prev => prev + 1);
+            setReport(reportJson.data.report);
+            setScores(reportJson.data.scores);
+            setRegenerating(false);
+            return;
+          }
+        } catch { /* ignore */ }
+        alert("生成に時間がかかっています。ページを再読み込みしてください。");
+      } else {
+        alert("再生成中にエラーが発生しました");
+      }
     }
     setRegenerating(false);
   }
