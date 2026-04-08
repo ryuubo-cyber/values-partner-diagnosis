@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT, buildReportPrompt } from "@/config/prompts";
 import { ReportJson, CategoryScores } from "@/types";
 import { generateFallbackReport } from "./fallback-report";
-import { CATEGORY_MAP } from "@/config/categories";
 
 interface GenerateReportInput {
   profile: Record<string, string>;
@@ -15,10 +14,11 @@ interface GenerateReportInput {
 
 /**
  * Claude APIを使ってAIレポートを生成
- * 失敗時はリトライせず即フォールバック（無駄な課金を防止）
+ * isRegenerate=true の場合は高速モデル（Haiku）を使用
  */
 export async function generateAIReport(
-  input: GenerateReportInput
+  input: GenerateReportInput,
+  isRegenerate = false
 ): Promise<{ reportJson: ReportJson; modelName: string; isFallback: boolean }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -31,12 +31,17 @@ export async function generateAIReport(
   }
 
   const client = new Anthropic({ apiKey });
-  const modelName = process.env.AI_MODEL_NAME || "claude-sonnet-4-20250514";
+
+  // 再生成時はHaiku（高速・低コスト）、初回はSonnet
+  const modelName = isRegenerate
+    ? "claude-haiku-4-5-20251001"
+    : (process.env.AI_MODEL_NAME || "claude-sonnet-4-20250514");
+  const maxTokens = isRegenerate ? 3000 : 4096;
 
   try {
     const message = await client.messages.create({
       model: modelName,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -53,14 +58,12 @@ export async function generateAIReport(
 
     // JSONパース
     let jsonText = textBlock.text.trim();
-    // コードブロックで囲まれている場合を処理
     if (jsonText.startsWith("```")) {
       jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
     }
 
     const parsed = JSON.parse(jsonText) as ReportJson;
 
-    // 最低限の検証（厳しすぎるとリトライで無駄な課金になるため緩め）
     if (!parsed.mainType || !parsed.overallType?.text) {
       throw new Error("Essential fields missing from AI response");
     }
@@ -72,7 +75,6 @@ export async function generateAIReport(
     return { reportJson: merged, modelName, isFallback: false };
   } catch (error) {
     console.error("AI report generation failed:", error);
-    console.warn("Using fallback report");
     return {
       reportJson: generateFallbackReport(input),
       modelName: "fallback",

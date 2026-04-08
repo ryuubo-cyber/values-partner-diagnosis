@@ -115,15 +115,18 @@ export async function POST(
       if (p.snsUsage) profile.snsUsage = p.snsUsage;
     }
 
-    // AIレポート生成
-    const { reportJson, modelName, isFallback } = await generateAIReport({
-      profile,
-      scores: categoryScores,
-      highCategories,
-      lowCategories,
-      mainType,
-      subType,
-    });
+    // AIレポート生成（再生成時はHaikuモデルで高速化）
+    const { reportJson, modelName, isFallback } = await generateAIReport(
+      {
+        profile,
+        scores: categoryScores,
+        highCategories,
+        lowCategories,
+        mainType,
+        subType,
+      },
+      forceRegenerate
+    );
 
     // レポート保存
     const now = new Date();
