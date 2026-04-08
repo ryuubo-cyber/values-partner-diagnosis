@@ -22,6 +22,7 @@ interface CompareResult {
   gapCategories: CategoryDiff[];
   relationScores: {
     romance: number;
+    marriage: number;
     business: number;
     friendship: number;
     client: number;
@@ -89,23 +90,30 @@ function ComparePage() {
   }
 
   const scoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-primary";
-    if (score >= 40) return "text-yellow-600";
+    if (score >= 70) return "text-green-600";
+    if (score >= 50) return "text-primary";
+    if (score >= 35) return "text-yellow-600";
     return "text-warm-500";
   };
 
   const scoreBg = (score: number) => {
-    if (score >= 80) return "from-green-100 to-green-50 border-green-200";
-    if (score >= 60) return "from-warm-200 to-background border-warm-300";
-    if (score >= 40) return "from-yellow-100 to-yellow-50 border-yellow-200";
+    if (score >= 70) return "from-green-100 to-green-50 border-green-200";
+    if (score >= 50) return "from-warm-200 to-background border-warm-300";
+    if (score >= 35) return "from-yellow-100 to-yellow-50 border-yellow-200";
     return "from-warm-100 to-warm-50 border-warm-200";
   };
 
+  const scoreLabel = (score: number) => {
+    if (score >= 70) return "高い相性";
+    if (score >= 50) return "まずまずの相性";
+    if (score >= 35) return "やや差あり";
+    return "差が大きい";
+  };
+
   const matchStyle = (match: string) => {
-    if (match === "high") return { label: "◎ 近い", cls: "text-green-600 bg-green-50 border-green-200" };
+    if (match === "high") return { label: "◎ 一致", cls: "text-green-600 bg-green-50 border-green-200" };
     if (match === "mid") return { label: "○ やや近い", cls: "text-primary bg-warm-50 border-warm-200" };
-    return { label: "△ 差あり", cls: "text-warm-500 bg-warm-100 border-warm-200" };
+    return { label: "△ 要注意", cls: "text-red-500 bg-red-50 border-red-200" };
   };
 
   if (step === "result" && result) {
@@ -128,15 +136,20 @@ function ComparePage() {
           <div className={`text-5xl font-bold mb-1 ${scoreColor(result.compatibilityScore)}`}>
             {result.compatibilityScore}<span className="text-2xl">点</span>
           </div>
-          <p className="text-xs text-text-muted">総合相性スコア（100点満点）</p>
+          <p className={`text-sm font-medium mb-1 ${scoreColor(result.compatibilityScore)}`}>
+            {scoreLabel(result.compatibilityScore)}
+          </p>
+          <p className="text-xs text-text-muted">総合相性スコア（70点以上で高い相性）</p>
         </div>
 
         {/* 関係タイプ別相性 */}
         <div className="bg-surface rounded-2xl p-5 border border-border">
           <h3 className="text-base font-bold text-warm-800 mb-4">関係タイプ別の相性</h3>
+          <p className="text-xs text-text-muted mb-3">70点以上 = 高い相性 / 50点以上 = まずまず / それ以下 = 差あり</p>
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: "恋愛", emoji: "❤️", score: result.relationScores.romance },
+              { label: "結婚", emoji: "💍", score: result.relationScores.marriage },
               { label: "仕事", emoji: "💼", score: result.relationScores.business },
               { label: "友人", emoji: "👫", score: result.relationScores.friendship },
               { label: "クライアント", emoji: "🤝", score: result.relationScores.client },
@@ -147,6 +160,7 @@ function ComparePage() {
                   {score}<span className="text-sm">点</span>
                 </div>
                 <div className="text-xs text-text-muted">{label}相性</div>
+                <div className={`text-xs mt-0.5 ${scoreColor(score)}`}>{scoreLabel(score)}</div>
               </div>
             ))}
           </div>

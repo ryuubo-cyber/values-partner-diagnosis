@@ -42,6 +42,10 @@ export async function POST(
       lifestyle: sanitize(body.lifestyle),
       smartphone: sanitize(body.smartphone),
       snsUsage: sanitize(body.snsUsage),
+      foodPreference: sanitize(body.foodPreference),
+      financialHabit: sanitize(body.financialHabit),
+      friendCount: sanitize(body.friendCount),
+      parentRelationship: sanitize(body.parentRelationship),
     };
     await prisma.diagnosisProfile.upsert({
       where: { sessionId: id },

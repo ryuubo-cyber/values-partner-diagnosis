@@ -113,6 +113,10 @@ export async function POST(
       if (p.lifestyle) profile.lifestyle = p.lifestyle;
       if (p.smartphone) profile.smartphone = p.smartphone;
       if (p.snsUsage) profile.snsUsage = p.snsUsage;
+      if (p.foodPreference) profile.foodPreference = p.foodPreference;
+      if (p.financialHabit) profile.financialHabit = p.financialHabit;
+      if (p.friendCount) profile.friendCount = p.friendCount;
+      if (p.parentRelationship) profile.parentRelationship = p.parentRelationship;
     }
 
     // AIレポート生成（再生成時はHaikuモデルで高速化）
