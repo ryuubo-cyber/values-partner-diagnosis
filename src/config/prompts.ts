@@ -124,15 +124,15 @@ ${data.subType}
 
 要件:
 - mainType, subType を含める
-- overallType は500字以上。このユーザーの上位カテゴリの「組み合わせ」が生む独自の傾向を分析する
-- highScoreDeepDive は3カテゴリ以上、各400字前後。スコア値に具体的に言及する
-- categoryFeedbacks は10カテゴリすべて、各300字前後。「こだわりの強さ」として中立的に解釈する
+- overallType は400字以上。このユーザーの上位カテゴリの「組み合わせ」が生む独自の傾向を分析する
+- highScoreDeepDive は3カテゴリ以上、各300字前後。スコア値に具体的に言及する
+- categoryFeedbacks は10カテゴリすべて、各200字前後。「こだわりの強さ」として中立的に解釈する
 - idealPartnerAnalysis は具体的に書く。高得点カテゴリ×低得点カテゴリの組み合わせから導く
-- compatibilityAnalysis は romance, marriage, business, friendship, client の5つ。各600字以上の自然な文章で書く
+- compatibilityAnalysis は romance, marriage, business, friendship, client の5つ。各400字以上の自然な文章で書く
   - TOP5リストではなく、「どんな人が合うか」「期待しすぎない方がいい部分」「相手に任せた方がいい部分」をスコアに基づいて語る
   - 恋愛と結婚で求めるものの違いを明確にする
   - 人物像が想像できる具体性で書く
-- encounterHints は800字以上の完全オーダーメイド。以下を必ず含める：
+- encounterHints は600字以上の完全オーダーメイド。以下を必ず含める：
   - 現在は${new Date().getFullYear()}年。現実的な出会い方を多角的に提案する
   - 【最優先】マッチングアプリを最も推奨する出会い手段として詳しく書く：
     - 母数が数百万人で効率的に価値観の合う相手を探せる
@@ -152,13 +152,13 @@ ${data.subType}
   - 「日常の中で今日から実践できること」を1つ以上含める
   - 「あなたが陥りやすいパターンと避けるべきこと」を1つ以上含める
   - 資産形成セミナー・FP講座・投資サークルは出会いの場としては詐欺リスクが高い（お金の勉強自体は否定しない→moneyAnalysisで扱う）
-- moneyAnalysis は500字以上で重点的に分析。moneyスコアだけでなく、career・family・lifestyleとの掛け合わせで深掘りする${data.profile.financialHabit ? `。このユーザーのお金の使い方は「${data.profile.financialHabit}」。この金銭習慣とスコアの関連を分析する` : ""}。お金の知識を身につける方法（書籍、信頼できるFP相談、資格取得等）はこのセクションで提案してよい
-- loveAndMarriageAnalysis は500字以上。family・communication・selfcareのスコア組み合わせから独自の恋愛パターンを分析${data.profile.familyStructure ? `。現在の家族構成「${data.profile.familyStructure}」を踏まえた現実的な恋愛・結婚アドバイスを含める` : ""}${data.profile.parentRelationship ? `。親との関係「${data.profile.parentRelationship}」がパートナーシップに与える影響も考察する` : ""}
-- regionalCompatibility は500字以上。スコアパターンから相性の良い日本の都道府県・地域文化を県民性（県ごとの性格傾向・恋愛観・金銭感覚・コミュニケーションスタイル）に基づいて分析する。具体的な都道府県名を3つ以上挙げ、なぜそのユーザーと相性が良いかをスコアと紐づけて説明する${data.profile.birthPlace ? `。出身地（${data.profile.birthPlace}）の県民性との相性・影響も分析する` : ""}${data.profile.currentResidence ? `。現在の住まい（${data.profile.currentResidence}）の地域性との関係も考慮する` : ""}
-- fourPillarsInsight は800字以上。${hasBirthDate ? `生年月日（${data.profile.birthDate}）から実際の四柱推命の命式を算出する。年柱・月柱・日柱の天干地支を明記し、五行バランス（木火土金水の個数と過不足）を分析する。日干を本命として性格・恋愛傾向・パートナー相性を詳しく鑑定する。可能であれば算命学的な視点（守護神、天中殺、大運の流れ等）も加える。100問の価値観スコアと五行の関連を統合分析する` : "スコアパターンから五行の傾向を推定し、パートナー相性を分析する"}
-- partnerCheckGuide は400字以上。恋愛・仕事・友人・クライアントそれぞれの関係で比較すべきカテゴリと基準を、このユーザーのスコアに基づいて具体的に解説
-- compatibilityNarrative は500字以上。compatibilityTop5のリストをまとめ、「あなたにとって理想的な人間関係」を恋愛・結婚・仕事・友人・クライアントを横断して語る文章。リスト形式ではなく、カウンセラーが語りかけるような自然な文体で書く
-- counselorMessage は500字以上。以下を必ず含める：
+- moneyAnalysis は300字以上で重点的に分析。moneyスコアだけでなく、career・family・lifestyleとの掛け合わせで深掘りする${data.profile.financialHabit ? `。このユーザーのお金の使い方は「${data.profile.financialHabit}」。この金銭習慣とスコアの関連を分析する` : ""}。お金の知識を身につける方法（書籍、信頼できるFP相談、資格取得等）はこのセクションで提案してよい
+- loveAndMarriageAnalysis は300字以上。family・communication・selfcareのスコア組み合わせから独自の恋愛パターンを分析${data.profile.familyStructure ? `。現在の家族構成「${data.profile.familyStructure}」を踏まえた現実的な恋愛・結婚アドバイスを含める` : ""}${data.profile.parentRelationship ? `。親との関係「${data.profile.parentRelationship}」がパートナーシップに与える影響も考察する` : ""}
+- regionalCompatibility は300字以上。スコアパターンから相性の良い日本の都道府県・地域文化を県民性（県ごとの性格傾向・恋愛観・金銭感覚・コミュニケーションスタイル）に基づいて分析する。具体的な都道府県名を3つ以上挙げ、なぜそのユーザーと相性が良いかをスコアと紐づけて説明する${data.profile.birthPlace ? `。出身地（${data.profile.birthPlace}）の県民性との相性・影響も分析する` : ""}${data.profile.currentResidence ? `。現在の住まい（${data.profile.currentResidence}）の地域性との関係も考慮する` : ""}
+- fourPillarsInsight は400字以上。${hasBirthDate ? `生年月日（${data.profile.birthDate}）から実際の四柱推命の命式を算出する。年柱・月柱・日柱の天干地支を明記し、五行バランス（木火土金水の個数と過不足）を分析する。日干を本命として性格・恋愛傾向・パートナー相性を詳しく鑑定する。可能であれば算命学的な視点（守護神、天中殺、大運の流れ等）も加える。100問の価値観スコアと五行の関連を統合分析する` : "スコアパターンから五行の傾向を推定し、パートナー相性を分析する"}
+- partnerCheckGuide は250字以上。恋愛・仕事・友人・クライアントそれぞれの関係で比較すべきカテゴリと基準を、このユーザーのスコアに基づいて具体的に解説
+- compatibilityNarrative は300字以上。compatibilityTop5のリストをまとめ、「あなたにとって理想的な人間関係」を恋愛・結婚・仕事・友人・クライアントを横断して語る文章。リスト形式ではなく、カウンセラーが語りかけるような自然な文体で書く
+- counselorMessage は300字以上。以下を必ず含める：
   - このユーザーの具体的なスコア値（高得点・低得点カテゴリの点数）に言及する
   - プロフィール情報（年代、職業、住まい等）に触れてパーソナライズする
   - 「あなたのスコアパターンを見ると」のように、データに基づいた具体的な励まし
@@ -185,11 +185,11 @@ ${data.profile.transportation ? `- 主な移動手段は「${data.profile.transp
   "categoryFeedbacks": [{ "categoryId": "string", "title": "string", "score": number, "text": "string" }],
   "idealPartnerAnalysis": { "title": "string", "text": "string" },
   "compatibilityAnalysis": {
-    "romance": { "title": "string", "text": "string (600字以上)" },
-    "marriage": { "title": "string", "text": "string (600字以上)" },
-    "business": { "title": "string", "text": "string (600字以上)" },
-    "friendship": { "title": "string", "text": "string (600字以上)" },
-    "client": { "title": "string", "text": "string (600字以上)" }
+    "romance": { "title": "string", "text": "string (400字以上)" },
+    "marriage": { "title": "string", "text": "string (400字以上)" },
+    "business": { "title": "string", "text": "string (400字以上)" },
+    "friendship": { "title": "string", "text": "string (400字以上)" },
+    "client": { "title": "string", "text": "string (400字以上)" }
   },
   "compatibilityNarrative": { "title": "string", "text": "string" },
   "encounterHints": { "title": "string", "text": "string" },
