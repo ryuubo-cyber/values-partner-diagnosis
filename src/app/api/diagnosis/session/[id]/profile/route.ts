@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const MAX_FIELD_LENGTH = 200;
+const MAX_FIELD_LENGTH = 500;
 
 function sanitize(value: unknown): string {
   if (typeof value !== "string") return "";
@@ -46,6 +46,13 @@ export async function POST(
       financialHabit: sanitize(body.financialHabit),
       friendCount: sanitize(body.friendCount),
       parentRelationship: sanitize(body.parentRelationship),
+      hobbies: sanitize(body.hobbies),
+      transportation: sanitize(body.transportation),
+      personalityType: sanitize(body.personalityType),
+      clubActivity: sanitize(body.clubActivity),
+      beautyInterest: sanitize(body.beautyInterest),
+      itLiteracy: sanitize(body.itLiteracy),
+      moneyLiteracy: sanitize(body.moneyLiteracy),
     };
     await prisma.diagnosisProfile.upsert({
       where: { sessionId: id },

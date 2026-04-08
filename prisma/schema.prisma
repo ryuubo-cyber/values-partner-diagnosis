@@ -47,6 +47,13 @@ model DiagnosisProfile {
   financialHabit   String @default("")
   friendCount      String @default("")
   parentRelationship String @default("")
+  hobbies          String @default("")
+  transportation   String @default("")
+  personalityType  String @default("")
+  clubActivity     String @default("")
+  beautyInterest   String @default("")
+  itLiteracy       String @default("")
+  moneyLiteracy    String @default("")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
