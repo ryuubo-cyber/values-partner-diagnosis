@@ -14,7 +14,7 @@ interface GenerateReportInput {
 
 /**
  * Claude APIを使ってAIレポートを生成
- * isRegenerate=true の場合は高速モデル（Haiku）を使用
+ * Vercel Hobby (60秒制限) でも完了できるようHaikuモデルを使用
  */
 export async function generateAIReport(
   input: GenerateReportInput,
@@ -32,11 +32,10 @@ export async function generateAIReport(
 
   const client = new Anthropic({ apiKey });
 
-  // 再生成時はHaiku（高速・低コスト）、初回はSonnet
-  const modelName = isRegenerate
-    ? "claude-haiku-4-5-20251001"
-    : (process.env.AI_MODEL_NAME || "claude-sonnet-4-20250514");
-  const maxTokens = isRegenerate ? 4000 : 6000;
+  // Haiku（高速・Vercel 60秒制限内で完了可能）をデフォルトに
+  // 長時間タイムアウトが使える環境ではAI_MODEL_NAMEでSonnet等に切替可能
+  const modelName = process.env.AI_MODEL_NAME || "claude-haiku-4-5-20251001";
+  const maxTokens = isRegenerate ? 3500 : 4096;
 
   try {
     const message = await client.messages.create({
@@ -49,6 +48,8 @@ export async function generateAIReport(
           content: buildReportPrompt(input),
         },
       ],
+    }, {
+      timeout: 45_000, // 45秒タイムアウト（Vercel 60秒制限内に収める）
     });
 
     const textBlock = message.content.find((b) => b.type === "text");
