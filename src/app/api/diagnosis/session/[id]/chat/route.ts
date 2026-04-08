@@ -157,10 +157,25 @@ ${reportJson.overallType?.text ? `全体分析: ${reportJson.overallType.text.sl
     });
   } catch (error) {
     console.error("Chat API error:", error);
-    const message = error instanceof Error ? error.message : "チャットエラーが発生しました";
+
+    // Anthropic APIのエラーを分かりやすく変換
+    let userMessage = "チャットエラーが発生しました";
+    let status = 500;
+
+    if (error instanceof Anthropic.AuthenticationError) {
+      userMessage = "AI機能の認証に失敗しました。管理者にお問い合わせください。";
+      status = 503;
+    } else if (error instanceof Anthropic.RateLimitError) {
+      userMessage = "AIへのリクエストが混み合っています。少し時間を置いてお試しください。";
+      status = 429;
+    } else if (error instanceof Anthropic.APIError) {
+      userMessage = "AI機能が一時的に利用できません。しばらくお待ちください。";
+      status = 503;
+    }
+
     return Response.json(
-      { success: false, error: message },
-      { status: 500 }
+      { success: false, error: userMessage },
+      { status }
     );
   }
 }
