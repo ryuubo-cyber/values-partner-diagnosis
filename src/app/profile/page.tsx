@@ -7,10 +7,11 @@ import { Button } from "@/components/Button";
 interface FieldDef {
   key: string;
   label: string;
-  type: "date" | "select" | "text";
+  type: "date" | "select" | "multi" | "text";
   placeholder?: string;
   options?: string[];
   description?: string;
+  maxSelect?: number; // multi選択時の最大数
 }
 
 /** 生年月日から年代を自動計算 */
@@ -84,13 +85,18 @@ const FIELDS: FieldDef[] = [
       "会社員（物流・配送・倉庫）",
       "会社員（カスタマーサポート・コールセンター）",
       "会社員（その他）",
-      // 専門職・士業
+      // 医療・治療・リラクゼーション系
       "医師",
       "看護師・助産師",
       "薬剤師",
       "歯科医師・歯科衛生士",
+      "柔道整復師",
+      "鍼灸師・あん摩マッサージ指圧師",
+      "整体師・カイロプラクター",
       "理学療法士・作業療法士",
+      "リラクゼーションセラピスト・アロマセラピスト",
       "介護士・ヘルパー",
+      // 士業・専門職
       "弁護士",
       "公認会計士・税理士",
       "社会保険労務士・行政書士",
@@ -102,6 +108,11 @@ const FIELDS: FieldDef[] = [
       "公務員（国家公務員）",
       "公務員（地方公務員）",
       "警察官・消防士・自衛官",
+      // スポーツ・フィットネス
+      "プロスポーツ選手・格闘家",
+      "スポーツトレーナー・インストラクター",
+      "パーソナルトレーナー",
+      "ヨガ・ピラティスインストラクター",
       // 独立・経営系
       "経営者・役員",
       "自営業・個人事業主",
@@ -119,9 +130,10 @@ const FIELDS: FieldDef[] = [
       "データサイエンティスト・AI/ML",
       "インフラエンジニア・SRE",
       "Webディレクター・PM",
-      // サービス・接客
-      "飲食店スタッフ・調理師",
-      "美容師・エステティシャン",
+      // サービス・接客・美容
+      "飲食店スタッフ・調理師・パティシエ",
+      "美容師・理容師",
+      "エステティシャン・ネイリスト",
       "ホテル・旅館スタッフ",
       "販売員・ショップスタッフ",
       "ブライダル・冠婚葬祭",
@@ -163,27 +175,49 @@ const FIELDS: FieldDef[] = [
     ],
   },
   {
-    key: "lifestyle",
-    label: "休日の過ごし方",
-    type: "select",
+    key: "hobbies",
+    label: "趣味・好きなこと（複数選択可）",
+    type: "multi",
+    maxSelect: 5,
     options: [
-      "アウトドア派（旅行・スポーツ・自然）",
-      "インドア派（読書・映画・ゲーム）",
-      "社交派（友人と会う・イベント参加）",
-      "自己投資派（勉強・資格・スキルアップ）",
-      "リラックス派（カフェ・散歩・のんびり）",
-      "クリエイティブ派（料理・DIY・創作）",
+      "旅行・お出かけ", "キャンプ・アウトドア", "登山・ハイキング",
+      "ランニング・ジョギング", "筋トレ・ジム", "ヨガ・ピラティス",
+      "スポーツ観戦", "スポーツ（チーム系）", "格闘技・武道",
+      "釣り", "ゴルフ", "サーフィン・マリンスポーツ",
+      "映画・ドラマ鑑賞", "読書", "音楽鑑賞・ライブ",
+      "楽器演奏・歌", "ゲーム（スマホ・PC・PS等）", "アニメ・漫画",
+      "料理・お菓子作り", "カフェ巡り", "食べ歩き・グルメ",
+      "お酒・ワイン・クラフトビール", "写真・カメラ", "動画制作・配信",
+      "イラスト・絵を描く", "ハンドメイド・DIY", "ファッション",
+      "美容・コスメ", "ガーデニング・植物", "ペット・動物",
+      "ドライブ・ツーリング", "サウナ・温泉", "ボードゲーム・カードゲーム",
+      "プログラミング・テック", "投資・資産運用", "語学学習",
+      "ボランティア・社会活動", "瞑想・マインドフルネス", "特になし",
     ],
+    description: "最大5つまで選べます",
   },
   {
     key: "snsUsage",
-    label: "よく使うSNS",
-    type: "select",
+    label: "よく使うSNS（複数選択可）",
+    type: "multi",
+    maxSelect: 3,
     options: [
-      "Instagram中心", "X（Twitter）中心", "LINE中心",
-      "TikTok中心", "YouTube中心", "Facebook中心",
-      "あまりSNSは使わない", "複数を均等に使う",
+      "Instagram", "X（Twitter）", "LINE", "TikTok",
+      "YouTube", "Facebook", "Threads", "BeReal",
+      "あまりSNSは使わない",
     ],
+    description: "最大3つまで選べます",
+  },
+  {
+    key: "transportation",
+    label: "主な移動手段（複数選択可）",
+    type: "multi",
+    maxSelect: 3,
+    options: [
+      "車", "電車・バス", "自転車", "バイク・原付",
+      "徒歩中心", "タクシー・配車アプリ", "なし（在宅中心）",
+    ],
+    description: "最大3つまで選べます",
   },
   {
     key: "foodPreference",
@@ -197,7 +231,69 @@ const FIELDS: FieldDef[] = [
       "オーガニック・ヴィーガン志向",
       "お酒好き（飲み会・晩酌が多い）",
     ],
-    description: "パートナーとの食の相性は重要です",
+  },
+  {
+    key: "personalityType",
+    label: "自分の性格タイプ",
+    type: "select",
+    options: [
+      "ポジティブ（基本的に前向き）",
+      "ややポジティブ（楽観的だが慎重な面もある）",
+      "バランス型（状況次第）",
+      "ややネガティブ（心配性・慎重派）",
+      "ネガティブ（考えすぎてしまう傾向）",
+    ],
+  },
+  {
+    key: "clubActivity",
+    label: "過去の部活・スポーツ経験（複数選択可）",
+    type: "multi",
+    maxSelect: 3,
+    options: [
+      "野球", "サッカー・フットサル", "バスケットボール", "バレーボール",
+      "テニス・卓球・バドミントン", "陸上・水泳", "柔道・剣道・空手など武道",
+      "ダンス・チアリーディング", "吹奏楽・オーケストラ", "美術・デザイン",
+      "演劇・放送", "茶道・華道・書道", "写真・映像", "軽音楽・バンド",
+      "帰宅部・無所属", "その他の運動部", "その他の文化部",
+    ],
+    description: "最大3つまで選べます",
+  },
+  {
+    key: "beautyInterest",
+    label: "美容への関心",
+    type: "select",
+    options: [
+      "とても高い（スキンケア・脱毛・美容院にこだわる）",
+      "やや高い（清潔感は大切にしている）",
+      "普通（最低限のケアはする）",
+      "あまりない（特にこだわらない）",
+    ],
+  },
+  {
+    key: "itLiteracy",
+    label: "IT・デジタルリテラシー",
+    type: "select",
+    options: [
+      "上級（プログラミングやAI活用ができる）",
+      "中上級（PCを使いこなし、新しいツールも積極的に使う）",
+      "中級（PC・スマホの基本操作は問題なし）",
+      "初級（スマホ中心でPCはあまり使わない）",
+      "苦手（デジタル機器は最低限しか使えない）",
+    ],
+    description: "AI・PC・スマホなどの活用度",
+  },
+  {
+    key: "moneyLiteracy",
+    label: "マネーリテラシー",
+    type: "select",
+    options: [
+      "上級（NISA・iDeCo等で資産運用、ライフプラン設計済み）",
+      "中上級（家計簿アプリ等で管理し、投資も少し行っている）",
+      "中級（貯金はしているが、資産運用は未経験）",
+      "初級（収支をなんとなく把握している程度）",
+      "苦手（お金の管理はほとんどしていない）",
+    ],
+    description: "資産形成・家計管理の実践度",
   },
   {
     key: "financialHabit",
@@ -211,7 +307,6 @@ const FIELDS: FieldDef[] = [
       "あまり考えない（なんとなく使う）",
       "ローン・借入がある",
     ],
-    description: "金銭感覚の違いは関係に大きく影響します",
   },
   {
     key: "friendCount",
@@ -238,26 +333,28 @@ const FIELDS: FieldDef[] = [
       "片親または両親を亡くしている",
       "複雑な事情がある",
     ],
-    description: "家族関係はパートナーシップにも影響します",
-  },
-  {
-    key: "politicalInterest",
-    label: "社会問題への関心",
-    type: "select",
-    options: [
-      "とても関心がある", "やや関心がある",
-      "普通", "あまり関心がない", "ほとんど関心がない",
-    ],
   },
 ];
 
 export default function ProfilePage() {
   const router = useRouter();
   const [form, setForm] = useState<Record<string, string>>({});
+  const [multiForm, setMultiForm] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(false);
 
   const handleChange = useCallback((key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleMultiToggle = useCallback((key: string, value: string, maxSelect: number) => {
+    setMultiForm((prev) => {
+      const current = prev[key] || [];
+      if (current.includes(value)) {
+        return { ...prev, [key]: current.filter((v) => v !== value) };
+      }
+      if (current.length >= maxSelect) return prev;
+      return { ...prev, [key]: [...current, value] };
+    });
   }, []);
 
   async function handleSubmit() {
@@ -268,9 +365,15 @@ export default function ProfilePage() {
     }
 
     // Auto-calculate ageRange from birthDate
-    const submitData = { ...form };
+    const submitData: Record<string, string> = { ...form };
     if (submitData.birthDate) {
       submitData.ageRange = calcAgeRange(submitData.birthDate);
+    }
+    // Multi-select fields are joined with "、"
+    for (const [key, values] of Object.entries(multiForm)) {
+      if (values.length > 0) {
+        submitData[key] = values.join("、");
+      }
     }
 
     setSaving(true);
@@ -299,7 +402,7 @@ export default function ProfilePage() {
         すべて任意です。入力いただくと、より精度の高い診断結果が得られます。
       </p>
 
-      <div className="space-y-4 mb-8">
+      <div className="space-y-5 mb-8">
         {FIELDS.map((field) => (
           <div key={field.key}>
             <label className="block text-sm font-medium text-warm-700 mb-1">
@@ -308,7 +411,29 @@ export default function ProfilePage() {
             {field.description && (
               <p className="text-xs text-text-muted mb-1">{field.description}</p>
             )}
-            {field.type === "select" && field.options ? (
+
+            {/* 複数選択フィールド */}
+            {field.type === "multi" && field.options ? (
+              <div className="flex flex-wrap gap-2">
+                {field.options.map((opt) => {
+                  const selected = (multiForm[field.key] || []).includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => handleMultiToggle(field.key, opt, field.maxSelect || 5)}
+                      className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                        selected
+                          ? "bg-primary text-white border-primary"
+                          : "bg-surface text-text-light border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : field.type === "select" && field.options ? (
               <select
                 value={form[field.key] || ""}
                 onChange={(e) => handleChange(field.key, e.target.value)}
@@ -330,10 +455,18 @@ export default function ProfilePage() {
                 className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             )}
+
             {/* Show auto-calculated age after birthDate field */}
             {field.key === "birthDate" && computedAge && (
               <p className="text-xs text-primary mt-1 font-medium">
                 → 年代: {computedAge}（自動計算）
+              </p>
+            )}
+
+            {/* Show selected count for multi */}
+            {field.type === "multi" && (multiForm[field.key] || []).length > 0 && (
+              <p className="text-xs text-primary mt-1">
+                {(multiForm[field.key] || []).length}/{field.maxSelect || 5} 選択中
               </p>
             )}
           </div>

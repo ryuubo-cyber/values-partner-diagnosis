@@ -133,6 +133,13 @@ export async function POST(
       if (p.financialHabit) profile.financialHabit = p.financialHabit;
       if (p.friendCount) profile.friendCount = p.friendCount;
       if (p.parentRelationship) profile.parentRelationship = p.parentRelationship;
+      if (p.hobbies) profile.hobbies = p.hobbies;
+      if (p.transportation) profile.transportation = p.transportation;
+      if (p.personalityType) profile.personalityType = p.personalityType;
+      if (p.clubActivity) profile.clubActivity = p.clubActivity;
+      if (p.beautyInterest) profile.beautyInterest = p.beautyInterest;
+      if (p.itLiteracy) profile.itLiteracy = p.itLiteracy;
+      if (p.moneyLiteracy) profile.moneyLiteracy = p.moneyLiteracy;
     }
 
     // スコアラベル付き
