@@ -5,6 +5,26 @@ import { CATEGORY_MAP } from "@/config/categories";
 // Vercelサーバーレス関数のタイムアウトを60秒に延長
 export const maxDuration = 60;
 
+// 1セッションあたりのチャット上限回数
+const MAX_CHAT_PER_SESSION = 10;
+// レート制限: 同一IPから1分間に許可するリクエスト数
+const RATE_LIMIT_PER_MINUTE = 5;
+
+// メモリ内レート制限（Vercelのサーバーレスでは関数インスタンスごと）
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_PER_MINUTE) return false;
+  entry.count++;
+  return true;
+}
+
 const DEEP_DIVE_SYSTEM_PROMPT = `あなたは「価値観診断カウンセラー」です。
 ユーザーは100問の価値観診断を受け、詳細な診断結果を持っています。
 あなたの役割は、診断結果をもとに、ユーザーが気になる部分を深掘りし、より具体的で実践的なアドバイスを提供することです。
@@ -53,6 +73,24 @@ export async function POST(
       return Response.json(
         { success: false, error: "メッセージが必要です" },
         { status: 400 }
+      );
+    }
+
+    // IPベースのレート制限
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(ip)) {
+      return Response.json(
+        { success: false, error: "リクエストが多すぎます。1分ほどお待ちください。" },
+        { status: 429 }
+      );
+    }
+
+    // ユーザーメッセージ数をカウント（会話上限チェック）
+    const userMessageCount = messages.filter((m: { role: string }) => m.role === "user").length;
+    if (userMessageCount > MAX_CHAT_PER_SESSION) {
+      return Response.json(
+        { success: false, error: `深掘りチャットは1セッションあたり${MAX_CHAT_PER_SESSION}回までご利用いただけます。新しく診断を受けると、また利用できます。` },
+        { status: 429 }
       );
     }
 

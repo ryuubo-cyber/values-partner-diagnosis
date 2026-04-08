@@ -28,11 +28,16 @@ export default function DeepDiveChat({
   sectionTitle,
   onClose,
 }: DeepDiveChatProps) {
+  const MAX_MESSAGES = 10;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const userMessageCount = messages.filter(m => m.role === "user").length;
+  const remaining = MAX_MESSAGES - userMessageCount;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,7 +48,7 @@ export default function DeepDiveChat({
   }, []);
 
   async function sendMessage(text: string) {
-    if (!text.trim() || isLoading) return;
+    if (!text.trim() || isLoading || limitReached) return;
 
     const userMessage: ChatMessage = { role: "user", content: text.trim() };
     const newMessages = [...messages, userMessage];
@@ -67,6 +72,9 @@ export default function DeepDiveChat({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
+        if (res.status === 429) {
+          setLimitReached(true);
+        }
         throw new Error(json.error || "チャットエラー");
       }
 
@@ -81,7 +89,7 @@ export default function DeepDiveChat({
         ...newMessages,
         {
           role: "assistant",
-          content: `申し訳ありません。${errMsg}\nもう一度お試しください。`,
+          content: `${errMsg}`,
         },
       ]);
     }
@@ -195,47 +203,56 @@ export default function DeepDiveChat({
 
       {/* 入力エリア */}
       <div className="border-t border-border bg-surface px-4 py-3">
-        <div className="flex gap-2 items-end">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="質問を入力..."
-            rows={1}
-            disabled={isLoading}
-            className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-warm-800 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 disabled:opacity-50"
-            style={{ maxHeight: "120px" }}
-            onInput={(e) => {
-              const target = e.target as HTMLTextAreaElement;
-              target.style.height = "auto";
-              target.style.height = Math.min(target.scrollHeight, 120) + "px";
-            }}
-          />
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isLoading}
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white disabled:opacity-40 active:scale-90 transition-transform"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M22 2L11 13" />
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" />
-            </svg>
-          </button>
-        </div>
-        <p className="text-xs text-text-muted mt-1.5 text-center">
-          Enterで送信 / Shift+Enterで改行
-        </p>
+        {limitReached || remaining <= 0 ? (
+          <div className="text-center py-2">
+            <p className="text-sm text-text-muted">チャット回数の上限に達しました（{MAX_MESSAGES}回）</p>
+            <p className="text-xs text-text-muted mt-1">新しく診断を受けると、また利用できます。</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2 items-end">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="質問を入力..."
+                rows={1}
+                disabled={isLoading}
+                className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-warm-800 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 disabled:opacity-50"
+                style={{ maxHeight: "120px" }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height = Math.min(target.scrollHeight, 120) + "px";
+                }}
+              />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || isLoading}
+                className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white disabled:opacity-40 active:scale-90 transition-transform"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M22 2L11 13" />
+                  <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-xs text-text-muted mt-1.5 text-center">
+              残り{remaining}回 / Enterで送信
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

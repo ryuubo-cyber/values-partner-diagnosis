@@ -46,6 +46,8 @@ export default function ResultPage({
   const [chatOpen, setChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<{ title: string; text: string } | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [regenerateCount, setRegenerateCount] = useState(0);
+  const MAX_REGENERATE = 3;
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -150,6 +152,10 @@ export default function ResultPage({
 
   async function handleRegenerate() {
     if (regenerating) return;
+    if (regenerateCount >= MAX_REGENERATE) {
+      alert(`再生成は${MAX_REGENERATE}回までです。`);
+      return;
+    }
     if (!confirm("診断結果を再生成しますか？AIが別の切り口で新しい結果を作成します。")) return;
     setRegenerating(true);
     try {
@@ -163,6 +169,7 @@ export default function ResultPage({
       );
       const json = await res.json();
       if (json.success) {
+        setRegenerateCount(prev => prev + 1);
         // 新しいレポートを取得
         const reportRes = await fetch(`/api/diagnosis/session/${sessionId}/report`);
         const reportJson = await reportRes.json();
@@ -255,7 +262,7 @@ export default function ResultPage({
             disabled={regenerating}
             className="flex items-center justify-center gap-1.5 px-4 py-3 bg-warm-50 border border-warm-200 text-warm-600 rounded-xl text-sm active:scale-95 transition-transform disabled:opacity-50"
           >
-            &#128260; {regenerating ? "再生成中..." : "結果を再生成"}
+            &#128260; {regenerating ? "再生成中..." : regenerateCount >= MAX_REGENERATE ? "再生成上限" : `再生成（残${MAX_REGENERATE - regenerateCount}回）`}
           </button>
         </div>
       </div>
