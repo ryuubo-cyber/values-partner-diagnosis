@@ -234,7 +234,37 @@ export default function ResultPage({
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <p className="text-text-light mb-4">{error || "結果が見つかりません"}</p>
-        <Button onClick={() => router.push("/")}>トップに戻る</Button>
+        <div className="flex flex-col gap-3">
+          {!regenerating && (
+            <Button onClick={async () => {
+              setRegenerating(true);
+              setError(null);
+              try {
+                const res = await fetch(
+                  `/api/diagnosis/session/${sessionId}/generate-report`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ forceRegenerate: true }),
+                  }
+                );
+                const json = await res.json();
+                if (json.success) {
+                  window.location.reload();
+                } else {
+                  setError(json.error || "再生成に失敗しました");
+                }
+              } catch {
+                setError("再生成中にエラーが発生しました");
+              }
+              setRegenerating(false);
+            }}>
+              レポートを生成する
+            </Button>
+          )}
+          {regenerating && <p className="text-sm text-text-muted animate-pulse">レポートを生成中...</p>}
+          <Button variant="outline" onClick={() => router.push("/")}>トップに戻る</Button>
+        </div>
       </div>
     );
   }
@@ -430,28 +460,40 @@ export default function ResultPage({
       </Section>
 
       {/* 理想のパートナー像 */}
-      <Section title={report.idealPartnerAnalysis.title} onDeepDive={() => openDeepDive(report.idealPartnerAnalysis.title, report.idealPartnerAnalysis.text)}>
-        <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.idealPartnerAnalysis.text}</p>
-      </Section>
+      {report.idealPartnerAnalysis?.text && (
+        <Section title={report.idealPartnerAnalysis.title} onDeepDive={() => openDeepDive(report.idealPartnerAnalysis.title, report.idealPartnerAnalysis.text)}>
+          <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.idealPartnerAnalysis.text}</p>
+        </Section>
+      )}
 
       {/* 相性分析（ナラティブ形式） */}
       {report.compatibilityAnalysis && (
         <>
-          <Section title={report.compatibilityAnalysis.romance.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.romance.title, report.compatibilityAnalysis.romance.text)}>
-            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.romance.text}</p>
-          </Section>
-          <Section title={report.compatibilityAnalysis.marriage.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.marriage.title, report.compatibilityAnalysis.marriage.text)}>
-            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.marriage.text}</p>
-          </Section>
-          <Section title={report.compatibilityAnalysis.business.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.business.title, report.compatibilityAnalysis.business.text)}>
-            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.business.text}</p>
-          </Section>
-          <Section title={report.compatibilityAnalysis.friendship.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.friendship.title, report.compatibilityAnalysis.friendship.text)}>
-            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.friendship.text}</p>
-          </Section>
-          <Section title={report.compatibilityAnalysis.client.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.client.title, report.compatibilityAnalysis.client.text)}>
-            <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.client.text}</p>
-          </Section>
+          {report.compatibilityAnalysis.romance?.text && (
+            <Section title={report.compatibilityAnalysis.romance.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.romance.title, report.compatibilityAnalysis.romance.text)}>
+              <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.romance.text}</p>
+            </Section>
+          )}
+          {report.compatibilityAnalysis.marriage?.text && (
+            <Section title={report.compatibilityAnalysis.marriage.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.marriage.title, report.compatibilityAnalysis.marriage.text)}>
+              <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.marriage.text}</p>
+            </Section>
+          )}
+          {report.compatibilityAnalysis.business?.text && (
+            <Section title={report.compatibilityAnalysis.business.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.business.title, report.compatibilityAnalysis.business.text)}>
+              <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.business.text}</p>
+            </Section>
+          )}
+          {report.compatibilityAnalysis.friendship?.text && (
+            <Section title={report.compatibilityAnalysis.friendship.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.friendship.title, report.compatibilityAnalysis.friendship.text)}>
+              <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.friendship.text}</p>
+            </Section>
+          )}
+          {report.compatibilityAnalysis.client?.text && (
+            <Section title={report.compatibilityAnalysis.client.title} onDeepDive={() => openDeepDive(report.compatibilityAnalysis.client.title, report.compatibilityAnalysis.client.text)}>
+              <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.compatibilityAnalysis.client.text}</p>
+            </Section>
+          )}
         </>
       )}
 
@@ -480,19 +522,25 @@ export default function ResultPage({
       )}
 
       {/* 出会いのヒント */}
-      <Section title={report.encounterHints.title} onDeepDive={() => openDeepDive(report.encounterHints.title, report.encounterHints.text)}>
-        <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.encounterHints.text}</p>
-      </Section>
+      {report.encounterHints?.text && (
+        <Section title={report.encounterHints.title} onDeepDive={() => openDeepDive(report.encounterHints.title, report.encounterHints.text)}>
+          <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.encounterHints.text}</p>
+        </Section>
+      )}
 
       {/* お金観深層分析 */}
-      <Section title={report.moneyAnalysis.title} onDeepDive={() => openDeepDive(report.moneyAnalysis.title, report.moneyAnalysis.text)}>
-        <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.moneyAnalysis.text}</p>
-      </Section>
+      {report.moneyAnalysis?.text && (
+        <Section title={report.moneyAnalysis.title} onDeepDive={() => openDeepDive(report.moneyAnalysis.title, report.moneyAnalysis.text)}>
+          <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.moneyAnalysis.text}</p>
+        </Section>
+      )}
 
       {/* 恋愛傾向・結婚観 */}
-      <Section title={report.loveAndMarriageAnalysis.title} onDeepDive={() => openDeepDive(report.loveAndMarriageAnalysis.title, report.loveAndMarriageAnalysis.text)}>
-        <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.loveAndMarriageAnalysis.text}</p>
-      </Section>
+      {report.loveAndMarriageAnalysis?.text && (
+        <Section title={report.loveAndMarriageAnalysis.title} onDeepDive={() => openDeepDive(report.loveAndMarriageAnalysis.title, report.loveAndMarriageAnalysis.text)}>
+          <p className="text-sm text-text-light leading-relaxed whitespace-pre-wrap">{report.loveAndMarriageAnalysis.text}</p>
+        </Section>
+      )}
 
       {/* 地域相性（新セクション） */}
       {report.regionalCompatibility && (
