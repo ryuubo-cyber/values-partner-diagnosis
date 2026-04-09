@@ -140,6 +140,7 @@ export async function POST(
       if (p.beautyInterest) profile.beautyInterest = p.beautyInterest;
       if (p.itLiteracy) profile.itLiteracy = p.itLiteracy;
       if (p.moneyLiteracy) profile.moneyLiteracy = p.moneyLiteracy;
+      if (p.futurePlan) profile.futurePlan = p.futurePlan;
     }
 
     // スコアラベル付き

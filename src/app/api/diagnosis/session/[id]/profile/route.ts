@@ -55,6 +55,7 @@ export async function POST(
       moneyLiteracy: sanitize(body.moneyLiteracy),
       meetingHistory: sanitize(body.meetingHistory),
       partnerMeetingWay: sanitize(body.partnerMeetingWay),
+      futurePlan: sanitize(body.futurePlan),
     };
     await prisma.diagnosisProfile.upsert({
       where: { sessionId: id },

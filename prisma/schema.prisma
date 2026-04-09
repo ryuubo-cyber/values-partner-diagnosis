@@ -56,6 +56,7 @@ model DiagnosisProfile {
   moneyLiteracy    String @default("")
   meetingHistory   String @default("")
   partnerMeetingWay String @default("")
+  futurePlan       String @default("")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

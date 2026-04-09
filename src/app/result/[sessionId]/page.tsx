@@ -678,8 +678,9 @@ const PROFILE_LABELS: Record<string, string> = {
   itLiteracy: "ITリテラシー",
   moneyLiteracy: "マネーリテラシー",
   financialHabit: "お金の使い方",
-  friendCount: "友人関係",
+  friendCount: "友人との付き合い方",
   parentRelationship: "親との関係",
+  futurePlan: "将来の設計",
   meetingHistory: "今までの出会い方",
   partnerMeetingWay: "パートナーとの出会いきっかけ",
 };
