@@ -147,6 +147,7 @@ export async function POST(
       if (p.moneyLiteracy) profile.moneyLiteracy = p.moneyLiteracy;
       if (p.meetingHistory) profile.meetingHistory = p.meetingHistory;
       if (p.partnerMeetingWay) profile.partnerMeetingWay = p.partnerMeetingWay;
+      if (p.futurePlan) profile.futurePlan = p.futurePlan;
     }
 
     // AIレポート生成（質問レベル分析データも渡す）

@@ -203,7 +203,7 @@ function extractProfile(profile: any): Record<string, string> {
     "smartphone", "snsUsage", "foodPreference", "financialHabit",
     "friendCount", "parentRelationship", "hobbies", "transportation",
     "personalityType", "clubActivity", "beautyInterest", "itLiteracy", "moneyLiteracy",
-    "meetingHistory", "partnerMeetingWay",
+    "meetingHistory", "partnerMeetingWay", "futurePlan",
   ];
   for (const f of fields) {
     if (profile[f]) result[f] = profile[f];
