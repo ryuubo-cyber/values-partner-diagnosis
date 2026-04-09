@@ -217,6 +217,9 @@ ${reportJson.overallType?.text ? `全体分析: ${reportJson.overallType.text.sl
     } else if (error instanceof Anthropic.RateLimitError) {
       userMessage = "AIへのリクエストが混み合っています。少し時間を置いてお試しください。";
       status = 429;
+    } else if (error instanceof Anthropic.APIError && error.status === 400) {
+      userMessage = "この内容ではAI回答を生成できませんでした。別の質問をお試しください。";
+      status = 400;
     } else if (error instanceof Anthropic.APIError) {
       userMessage = "AI機能が一時的に利用できません。しばらくお待ちください。";
       status = 503;

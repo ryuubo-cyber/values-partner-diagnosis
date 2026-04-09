@@ -123,21 +123,23 @@ ${data.strongAgrees.map((q) => `- 「${q.questionText}」（${q.categoryId}）`)
 【強く否定している質問（回答1 = 全く当てはまらない）】
 ${data.strongDisagrees.map((q) => `- 「${q.questionText}」（${q.categoryId}）`).join("\n")}
 ` : ""}
-要件（※出力が長くなりすぎないよう、各セクション指定字数を守ること）:
+要件（※各セクションは指定字数を守り、端的だが具体的に。冗長な文章より短く刺さる表現を優先）:
 - mainType, subType を含める
-- overallType は200字程度。上位カテゴリの組み合わせが生む独自の傾向を分析
-- highScoreDeepDive は3カテゴリ以上、各150字程度。スコア値に言及
-- categoryFeedbacks は10カテゴリすべて、各100字程度
-- idealPartnerAnalysis は具体的に書く
-- compatibilityAnalysis は romance, marriage, business, friendship, client の5つ。各200字程度
+- overallType は150字程度。上位カテゴリの組み合わせが生む独自の傾向を端的に
+- highScoreDeepDive は3カテゴリ以上、各100字程度。スコア値に言及
+- categoryFeedbacks は10カテゴリすべて、各80字程度
+- idealPartnerAnalysis は具体的だが端的に（150字程度）
+- compatibilityAnalysis は romance, marriage, business, friendship, client の5つ。各150字程度
+- 【重要】キャリア志向が「高い」と判断するのはcareerスコア40以上のみ。35程度は「ふつう」
 - encounterHints は300字程度。${data.profile.familyStructure?.includes("既婚") ? `【重要】この方は既婚者です。恋愛・マッチングアプリは一切推奨せず、ビジネスマッチング・友人・人脈づくりの出会いを提案してください。タイトルは「人脈づくりのヒント」にしてください` : `${new Date().getFullYear()}年の現実的な出会い方を提案。マッチングアプリを最優先で推奨し、プロフィール・写真・メッセージのコツを含める`}${data.profile.ageRange ? `（年代: ${data.profile.ageRange}）` : ""}${data.profile.meetingHistory ? `。【過去の出会い方: ${data.profile.meetingHistory}】→既に試した方法は推奨せず、まだ試していない方法を提案すること` : ""}${data.profile.partnerMeetingWay ? `。【パートナーとの出会いきっかけ: ${data.profile.partnerMeetingWay}】` : ""}。セミナー・ワークショップ・コミュニティは非推奨
-- moneyAnalysis は150字程度${data.profile.financialHabit ? `。金銭習慣「${data.profile.financialHabit}」とスコアの関連を分析` : ""}
-- loveAndMarriageAnalysis は150字程度${data.profile.familyStructure ? `。家族構成「${data.profile.familyStructure}」を踏まえる` : ""}
-- regionalCompatibility は150字程度。相性の良い都道府県を3つ以上、県民性に基づいて提案${data.profile.birthPlace ? `。出身地: ${data.profile.birthPlace}` : ""}
-- fourPillarsInsight は200字程度。${hasBirthDate ? `生年月日（${data.profile.birthDate}）から命式を算出し、価値観スコアと統合分析` : "スコアパターンから五行傾向を推定"}
-- partnerCheckGuide は120字程度
-- compatibilityNarrative は150字程度。カウンセラー調の自然な文体
-- counselorMessage は150字程度。スコア値に言及しパーソナライズする
+- moneyAnalysis は100字程度${data.profile.financialHabit ? `。金銭習慣「${data.profile.financialHabit}」とスコアの関連を分析` : ""}
+- loveAndMarriageAnalysis は100字程度${data.profile.familyStructure ? `。家族構成「${data.profile.familyStructure}」を踏まえる` : ""}
+- regionalCompatibility は150字程度。${data.profile.birthPlace ? `出身地「${data.profile.birthPlace}」の県民性を分析し、` : ""}暮らし方（都会/田舎）の相性や、価値観に合う地域特性を具体的に。「どこの県が合う」より「どんな地域特性の人と合うか」を重視
+- fourPillarsInsight は150字程度。${hasBirthDate ? `生年月日（${data.profile.birthDate}）から命式を算出し、価値観スコアと統合分析` : "スコアパターンから五行傾向を推定"}
+- partnerCheckGuide は100字程度。相性比較ページでできること（AI分析・100問比較・プロフィール比較）を端的に案内
+- compatibilityNarrative は100字程度。カウンセラー調の自然な文体
+- counselorMessage は100字程度。スコア値に言及しパーソナライズする
+- 【重要】すべて日本語で出力。英語のカテゴリ名（money, career等）は使わず日本語名（お金観、キャリア観等）を使用する
 - プロフィール情報（趣味・性格タイプ・リテラシー・美容関心・部活経験・移動手段など）はすべてJSON内に含まれている。各セクションでこれらの情報を活用してパーソナライズすること
 - 【重要】強く共感/否定している質問リストがある場合、カテゴリスコアだけでなく個別の質問回答パターンからこのユーザー固有の価値観の「質」を分析すること。同じカテゴリスコアでも、どの質問に強く反応しているかで異なる分析を出す
 - すべて自然な日本語で、読みやすい段落構成にする
